@@ -17,7 +17,7 @@ public class BookshelfReaderServiceCollectionExtensionsTests
     [Fact]
     public void AddBookshelfReader_RegistersExpectedServices()
     {
-        IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
         {
             ["Authentication:ApiKey:RequireApiKey"] = "false",
             ["Uploads:MaxBytes"] = "1048576",
@@ -40,7 +40,7 @@ public class BookshelfReaderServiceCollectionExtensionsTests
     [Fact]
     public void AddBookshelfReader_InvalidEnrichmentOptions_ThrowsValidationException()
     {
-        IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
         {
             ["Enrichment:MaxConcurrentLookups"] = "0"
         }).Build();
@@ -59,7 +59,7 @@ public class BookshelfReaderServiceCollectionExtensionsTests
     [Fact]
     public void AddBookshelfReader_InvalidUploadsOptions_ThrowsValidationException()
     {
-        IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
         {
             ["Uploads:MaxBytes"] = "25000000", // 25 MB exceeds allowed maximum
             ["Uploads:AllowedContentTypes:0"] = "image/jpeg"
@@ -79,7 +79,7 @@ public class BookshelfReaderServiceCollectionExtensionsTests
     [Fact]
     public void AddBookshelfReader_RequiresApiKeyWithoutKeys_ThrowsValidationException()
     {
-        IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
         {
             ["Authentication:ApiKey:RequireApiKey"] = "true",
             ["Authentication:ApiKey:HeaderName"] = "X-API-Key"
@@ -99,7 +99,7 @@ public class BookshelfReaderServiceCollectionExtensionsTests
     [Fact]
     public void AddBookshelfReader_ConfiguresFormOptionsToKeepUploadsInMemory()
     {
-        IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
         {
             ["Uploads:MaxBytes"] = "1048576",
             ["Uploads:AllowedContentTypes:0"] = "image/jpeg"
@@ -119,7 +119,7 @@ public class BookshelfReaderServiceCollectionExtensionsTests
     [Fact]
     public void AddBookshelfReader_RejectsNonHttpsOpenLibraryBaseUrl()
     {
-        IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
         {
             ["OpenLibrary:BaseUrl"] = "http://example.com/"
         }).Build();
@@ -142,7 +142,7 @@ public class BookshelfReaderServiceCollectionExtensionsTests
         Environment.SetEnvironmentVariable("ANTHROPIC_API_KEY", null);
         try
         {
-            IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>()).Build();
+            IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)).Build();
 
             var services = new ServiceCollection();
             services.AddBookshelfReader(configuration);
@@ -167,7 +167,7 @@ public class BookshelfReaderServiceCollectionExtensionsTests
         Environment.SetEnvironmentVariable("ANTHROPIC_API_KEY", "env-api-key");
         try
         {
-            IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>()).Build();
+            IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)).Build();
 
             var services = new ServiceCollection();
             services.AddBookshelfReader(configuration);
@@ -187,7 +187,7 @@ public class BookshelfReaderServiceCollectionExtensionsTests
     [Fact]
     public void AddBookshelfReader_RejectsNonHttpsClaudeVisionBaseUrl()
     {
-        IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
         {
             ["ClaudeVision:ApiKey"] = "test-api-key",
             ["ClaudeVision:BaseUrl"] = "http://example.com/"
@@ -207,7 +207,7 @@ public class BookshelfReaderServiceCollectionExtensionsTests
     [Fact]
     public void AddBookshelfReader_WithValidApiKey_ResolvesVisionBookReader()
     {
-        IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        IConfigurationRoot configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>(StringComparer.Ordinal)
         {
             ["ClaudeVision:ApiKey"] = "test-api-key"
         }).Build();

@@ -65,26 +65,46 @@ internal static class ExifOrientationReader
 
     private static int TryReadOrientationFromApp1(byte[] data, int start, int length)
     {
+        if (!TryParseTiffHeader(data, start, length, out int tiffStart, out bool littleEndian))
+        {
+            return 0;
+        }
+
+        return FindOrientationValue(data, tiffStart, littleEndian);
+    }
+
+    private static bool TryParseTiffHeader(byte[] data, int start, int length, out int tiffStart, out bool littleEndian)
+    {
+        tiffStart = 0;
+        littleEndian = false;
+
         // "Exif\0\0" header followed by a TIFF header (byte-order + IFD0 offset).
         if (length < 14 || start + 14 > data.Length)
         {
-            return 0;
+            return false;
         }
 
         if (data[start] != 'E' || data[start + 1] != 'x' || data[start + 2] != 'i' || data[start + 3] != 'f'
             || data[start + 4] != 0x00 || data[start + 5] != 0x00)
         {
-            return 0;
+            return false;
         }
 
-        int tiffStart = start + 6;
-        bool littleEndian = data[tiffStart] == 'I' && data[tiffStart + 1] == 'I';
-        bool bigEndian = data[tiffStart] == 'M' && data[tiffStart + 1] == 'M';
-        if (!littleEndian && !bigEndian)
+        int candidateTiffStart = start + 6;
+        bool isLittleEndian = data[candidateTiffStart] == 'I' && data[candidateTiffStart + 1] == 'I';
+        bool isBigEndian = data[candidateTiffStart] == 'M' && data[candidateTiffStart + 1] == 'M';
+        if (!isLittleEndian && !isBigEndian)
         {
-            return 0;
+            return false;
         }
 
+        tiffStart = candidateTiffStart;
+        littleEndian = isLittleEndian;
+        return true;
+    }
+
+    private static int FindOrientationValue(byte[] data, int tiffStart, bool littleEndian)
+    {
         uint ifd0Offset = ReadUInt32(data, tiffStart + 4, littleEndian);
         long ifd0Start = tiffStart + ifd0Offset;
         if (ifd0Start < 0 || ifd0Start + 2 > data.Length)

@@ -17,7 +17,7 @@ namespace BookshelfReader.Infrastructure.VisionLlm;
 /// <see cref="ImagePreprocessor"/> - EXIF-corrected, downscaled, and re-encoded
 /// as metadata-free JPEG - before it is sent.
 /// </summary>
-public sealed class ClaudeVisionBookReader : IVisionBookReader
+public sealed partial class ClaudeVisionBookReader : IVisionBookReader
 {
     private const string MessagesPath = "v1/messages";
     private const string ImageMediaType = "image/jpeg";
@@ -180,7 +180,7 @@ public sealed class ClaudeVisionBookReader : IVisionBookReader
         catch (JsonException ex)
         {
             payload = null;
-            _logger.LogWarning(ex, "Could not parse the vision model's structured output.");
+            LogStructuredOutputParseFailed(_logger, ex);
         }
 
         var result = new VisionReadResult();
@@ -202,7 +202,7 @@ public sealed class ClaudeVisionBookReader : IVisionBookReader
 
         if (string.Equals(message.StopReason, "max_tokens", StringComparison.Ordinal))
         {
-            _logger.LogWarning("The vision model response was truncated at max_tokens ({MaxTokens}).", _options.MaxTokens);
+            LogResponseTruncated(_logger, _options.MaxTokens);
             result.Notes.Add("The vision model response was truncated at the configured token limit; some books may be missing.");
         }
 
@@ -246,4 +246,10 @@ public sealed class ClaudeVisionBookReader : IVisionBookReader
 
         return null;
     }
+
+    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Could not parse the vision model's structured output.")]
+    private static partial void LogStructuredOutputParseFailed(ILogger logger, Exception ex);
+
+    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "The vision model response was truncated at max_tokens ({MaxTokens}).")]
+    private static partial void LogResponseTruncated(ILogger logger, int maxTokens);
 }

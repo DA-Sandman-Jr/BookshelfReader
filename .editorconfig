@@ -36,15 +36,6 @@ generated_code = true
 indent_size = 4
 
 # -------------------------
-# Core formatting & hygiene -- bumped to error so dotnet format will fix and
-# CI will catch drift.
-# -------------------------
-
-dotnet_diagnostic.IDE0055.severity = error   # Formatting (whitespace, braces placement, etc.)
-dotnet_diagnostic.IDE0005.severity = error   # Remove unnecessary usings
-dotnet_diagnostic.IDE0011.severity = error   # Add braces to single-statement control flow
-
-# -------------------------
 # Using directives
 # -------------------------
 
@@ -144,35 +135,6 @@ csharp_style_deconstructed_variable_declaration = true:suggestion
 # Unused values -- use `_` discard
 csharp_style_unused_value_assignment_preference = discard_variable:warning
 csharp_style_unused_value_expression_statement_preference = discard_variable:silent
-
-# -------------------------
-# Selected IDE analyzers
-# Conservative on destructive auto-fixes (unused members are tricky for Godot
-# signal handlers and lifecycle hooks).
-# -------------------------
-
-dotnet_diagnostic.IDE0044.severity = warning      # Add readonly modifier
-dotnet_diagnostic.IDE0059.severity = warning      # Unnecessary value assignment
-dotnet_diagnostic.IDE0090.severity = suggestion   # Use 'new()' simplified
-dotnet_diagnostic.IDE0150.severity = suggestion   # Prefer 'null' check over type check
-dotnet_diagnostic.IDE0270.severity = suggestion   # Use coalesce expression
-# Risky / Godot-sensitive -- keep visible but not enforced.
-dotnet_diagnostic.IDE0051.severity = suggestion   # Unused private member
-dotnet_diagnostic.IDE0052.severity = suggestion   # Unread private member
-dotnet_diagnostic.IDE0060.severity = suggestion   # Unused parameter (Godot signals/lifecycle)
-
-# -------------------------
-# Code Analysis (CA) and xUnit analyzers worth enforcing.
-# These catch real perf and correctness issues, not stylistic preference.
-# -------------------------
-
-dotnet_diagnostic.CA1510.severity = warning   # Use ArgumentNullException.ThrowIfNull
-dotnet_diagnostic.CA1822.severity = warning   # Mark members as static when possible
-dotnet_diagnostic.CA1859.severity = warning   # Use more derived return type for performance
-dotnet_diagnostic.CA1861.severity = warning   # Prefer static readonly over constant array arguments
-
-dotnet_diagnostic.xUnit1042.severity = warning   # Use TheoryData<> over object[]
-dotnet_diagnostic.xUnit2032.severity = warning   # Assert.IsAssignableFrom is confusing; use IsType with exactMatch
 
 # -------------------------
 # New lines

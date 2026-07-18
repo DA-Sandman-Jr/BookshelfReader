@@ -6,6 +6,7 @@
     <IsPackable>true</IsPackable>
     <PackageId>BookshelfReader</PackageId>
     <RootNamespace>BookshelfReader</RootNamespace>
+    <B44Deterministic>true</B44Deterministic>
     <Description>Dependency-injection helpers and API endpoint mappings for a bookshelf image parsing pipeline: upload validation, pluggable vision-powered book reading (Claude by default, or OpenAI or Gemini - bring your own key), genre classification, and Open Library lookup with in-pipeline metadata enrichment. Call AddBookshelfReader() and AddBookshelfReaderApi() to wire the pipeline into an ASP.NET Core app, plus optional API-key auth (AddBookshelfReaderApiKey()) and parse rate limiting (AddBookshelfReaderRateLimiting()). Pulls in a Windows-only native dependency (OpenCvSharp4.Windows) for image preprocessing.</Description>
   </PropertyGroup>
   <ItemGroup>

@@ -8,7 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace BookshelfReader.Infrastructure.Enrichment;
 
-public sealed class BookEnrichmentService : IBookEnrichmentService
+public sealed partial class BookEnrichmentService : IBookEnrichmentService
 {
     private const int MaxGenres = 4;
 
@@ -129,10 +129,13 @@ public sealed class BookEnrichmentService : IBookEnrichmentService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Enrichment failed for candidate title '{Title}'", candidate.Title);
+            LogEnrichmentFailed(_logger, candidate.Title, ex);
             candidate.Notes.Add("Catalog lookup failed");
         }
     }
+
+    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Enrichment failed for candidate title '{Title}'")]
+    private static partial void LogEnrichmentFailed(ILogger logger, string title, Exception ex);
 
     private static (BookMetadata Metadata, int Score)? SelectBestMatch(
         BookCandidate candidate,

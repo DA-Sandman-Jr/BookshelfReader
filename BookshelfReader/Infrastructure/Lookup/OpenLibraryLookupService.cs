@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace BookshelfReader.Infrastructure.Lookup;
 
-public sealed class OpenLibraryLookupService : IBookLookupService
+public sealed partial class OpenLibraryLookupService : IBookLookupService
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<OpenLibraryLookupService> _logger;
@@ -39,7 +39,7 @@ public sealed class OpenLibraryLookupService : IBookLookupService
             if (attempt > 0)
             {
                 var delay = TimeSpan.FromSeconds(Math.Pow(2, attempt));
-                _logger.LogDebug("Retrying Open Library lookup (attempt {Attempt}/{Max}) after {Delay}s", attempt + 1, MaxRetries, delay.TotalSeconds);
+                LogRetryingLookup(_logger, attempt + 1, MaxRetries, delay.TotalSeconds);
                 await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
             }
 
@@ -77,10 +77,16 @@ public sealed class OpenLibraryLookupService : IBookLookupService
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Open Library lookup failed for query '{Query}' (attempt {Attempt}/{Max})", query, attempt + 1, MaxRetries);
+                LogLookupFailed(_logger, query, attempt + 1, MaxRetries, ex);
             }
         }
 
         return BookLookupResult.Failure("Unable to reach the book lookup service. Please try again later.");
     }
+
+    [LoggerMessage(EventId = 1, Level = LogLevel.Debug, Message = "Retrying Open Library lookup (attempt {Attempt}/{Max}) after {Delay}s")]
+    private static partial void LogRetryingLookup(ILogger logger, int attempt, int max, double delay);
+
+    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "Open Library lookup failed for query '{Query}' (attempt {Attempt}/{Max})")]
+    private static partial void LogLookupFailed(ILogger logger, string query, int attempt, int max, Exception ex);
 }

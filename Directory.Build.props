@@ -30,4 +30,9 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>bookshelf;book;claude;vision;anthropic;openai;gemini;opencv;openlibrary;aspnetcore;pipeline</PackageTags>
   </PropertyGroup>
+
+  <!-- Studio-wide code-quality analyzer rollout. -->
+  <ItemGroup>
+    <PackageReference Include="B44.Standards" Version="0.4.5" PrivateAssets="all" />
+  </ItemGroup>
 </Project>

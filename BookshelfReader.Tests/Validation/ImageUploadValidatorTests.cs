@@ -39,7 +39,7 @@ public class ImageUploadValidatorTests
         ImageUploadValidator validator = CreateValidator();
         var context = new DefaultHttpContext();
         context.Request.ContentType = "multipart/form-data";
-        context.Request.Form = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>());
+        context.Request.Form = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>(StringComparer.Ordinal));
 
         UploadValidationResult result = await validator.ValidateImageUploadAsync(context.Request, CancellationToken.None);
 
@@ -55,7 +55,7 @@ public class ImageUploadValidatorTests
         context.Request.ContentType = "multipart/form-data";
 
         FormFile file = CreateFormFile("image/jpg", CreateValidImageBytes());
-        context.Request.Form = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>(),
+        context.Request.Form = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues>(StringComparer.Ordinal),
             new FormFileCollection { file });
 
         UploadValidationResult result = await validator.ValidateImageUploadAsync(context.Request, CancellationToken.None);
