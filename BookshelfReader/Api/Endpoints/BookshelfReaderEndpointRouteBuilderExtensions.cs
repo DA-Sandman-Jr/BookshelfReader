@@ -113,7 +113,7 @@ public static class BookshelfReaderEndpointRouteBuilderExtensions
 
     private static ValidationProblem CreateValidationProblem(string key, string message)
     {
-        var errors = new Dictionary<string, string[]> { [key] = new[] { message } };
+        var errors = new Dictionary<string, string[]>(StringComparer.Ordinal) { [key] = new[] { message } };
         return TypedResults.ValidationProblem(errors);
     }
 }

@@ -10,7 +10,7 @@ namespace BookshelfReader.Infrastructure.VisionLlm;
 /// by the OpenAI and Gemini readers so structured-output parsing, title
 /// trimming, and the truncation note behave identically regardless of provider.
 /// </summary>
-internal static class VisionResultParser
+internal static partial class VisionResultParser
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -36,7 +36,7 @@ internal static class VisionResultParser
         catch (JsonException ex)
         {
             payload = null;
-            logger.LogWarning(ex, "Could not parse the vision model's structured output.");
+            LogStructuredOutputParseFailed(logger, ex);
         }
 
         var result = new VisionReadResult();
@@ -58,7 +58,7 @@ internal static class VisionResultParser
 
         if (wasTruncated)
         {
-            logger.LogWarning("The vision model response was truncated at max_tokens ({MaxTokens}).", maxTokens);
+            LogResponseTruncated(logger, maxTokens);
             result.Notes.Add("The vision model response was truncated at the configured token limit; some books may be missing.");
         }
 
@@ -73,7 +73,7 @@ internal static class VisionResultParser
     /// </summary>
     private static string ExtractJsonObject(string text)
     {
-        int start = text.IndexOf('{');
+        int start = text.IndexOf('{', StringComparison.Ordinal);
         int end = text.LastIndexOf('}');
         if (start >= 0 && end > start)
         {
@@ -82,4 +82,10 @@ internal static class VisionResultParser
 
         return text;
     }
+
+    [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Could not parse the vision model's structured output.")]
+    private static partial void LogStructuredOutputParseFailed(ILogger logger, Exception ex);
+
+    [LoggerMessage(EventId = 2, Level = LogLevel.Warning, Message = "The vision model response was truncated at max_tokens ({MaxTokens}).")]
+    private static partial void LogResponseTruncated(ILogger logger, int maxTokens);
 }

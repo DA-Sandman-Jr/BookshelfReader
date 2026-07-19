@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -127,12 +128,12 @@ public class BookshelfReaderApiIntegrationTests
         bool rateLimitingEnabled = false,
         int permitLimit = 10)
     {
-        return new Dictionary<string, string?>
+        return new Dictionary<string, string?>(StringComparer.Ordinal)
         {
             ["Authentication:ApiKey:RequireApiKey"] = requireApiKey.ToString(),
             ["Authentication:ApiKey:ValidKeys:0"] = ApiKey,
             ["RateLimiting:Parse:Enabled"] = rateLimitingEnabled.ToString(),
-            ["RateLimiting:Parse:PermitLimit"] = permitLimit.ToString(),
+            ["RateLimiting:Parse:PermitLimit"] = permitLimit.ToString(CultureInfo.InvariantCulture),
             ["RateLimiting:Parse:WindowSeconds"] = "60",
             ["ClaudeVision:ApiKey"] = "integration-test-key"
         };
@@ -171,7 +172,7 @@ public class BookshelfReaderApiIntegrationTests
             app.UseRateLimiter();
             app.MapBookshelfReaderApi();
 
-            await app.StartAsync();
+            await app.StartAsync(app.Lifetime.ApplicationStopping);
             using HttpClient client = app.GetTestClient();
             await test(client);
         }

@@ -22,6 +22,8 @@ public sealed class OpenAIVisionBookReader : IVisionBookReader
 {
     private const string ChatCompletionsPath = "v1/chat/completions";
 
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
     private readonly HttpClient _httpClient;
     private readonly OpenAIVisionOptions _options;
     private readonly ILogger<OpenAIVisionBookReader> _logger;
@@ -110,7 +112,7 @@ public sealed class OpenAIVisionBookReader : IVisionBookReader
         OpenAIChatResponse chat;
         try
         {
-            chat = JsonSerializer.Deserialize<OpenAIChatResponse>(responseBody, new JsonSerializerOptions(JsonSerializerDefaults.Web))
+            chat = JsonSerializer.Deserialize<OpenAIChatResponse>(responseBody, JsonOptions)
                 ?? throw new JsonException("Response body deserialized to null.");
         }
         catch (JsonException ex)

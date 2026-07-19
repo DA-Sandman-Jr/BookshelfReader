@@ -20,6 +20,8 @@ namespace BookshelfReader.Infrastructure.VisionLlm;
 /// </summary>
 public sealed class GeminiVisionBookReader : IVisionBookReader
 {
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
     private readonly HttpClient _httpClient;
     private readonly GeminiVisionOptions _options;
     private readonly ILogger<GeminiVisionBookReader> _logger;
@@ -110,7 +112,7 @@ public sealed class GeminiVisionBookReader : IVisionBookReader
         GeminiGenerateContentResponse generated;
         try
         {
-            generated = JsonSerializer.Deserialize<GeminiGenerateContentResponse>(responseBody, new JsonSerializerOptions(JsonSerializerDefaults.Web))
+            generated = JsonSerializer.Deserialize<GeminiGenerateContentResponse>(responseBody, JsonOptions)
                 ?? throw new JsonException("Response body deserialized to null.");
         }
         catch (JsonException ex)

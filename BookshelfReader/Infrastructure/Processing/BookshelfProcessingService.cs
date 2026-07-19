@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace BookshelfReader.Infrastructure.Processing;
 
-public sealed class BookshelfProcessingService : IBookshelfProcessingService
+public sealed partial class BookshelfProcessingService : IBookshelfProcessingService
 {
     private readonly IVisionBookReader _visionBookReader;
     private readonly IGenreClassifier _genreClassifier;
@@ -37,7 +37,7 @@ public sealed class BookshelfProcessingService : IBookshelfProcessingService
         byte[] imageData = await ReadAllBytesAsync(imageStream, cancellationToken).ConfigureAwait(false);
 
         VisionReadResult visionResult = await _visionBookReader.ReadAsync(imageData, cancellationToken).ConfigureAwait(false);
-        _logger.LogInformation("Vision model identified {Count} book(s) for image {ImageId}", visionResult.Books.Count, imageId);
+        LogBooksIdentified(_logger, visionResult.Books.Count, imageId);
 
         var books = visionResult.Books.Select(CreateCandidate).ToList();
 
@@ -45,7 +45,7 @@ public sealed class BookshelfProcessingService : IBookshelfProcessingService
         {
             await _enrichmentService.EnrichAsync(books, cancellationToken).ConfigureAwait(false);
             int enriched = books.Count(b => b.Metadata is not null);
-            _logger.LogInformation("Enriched {Enriched}/{Total} candidates for image {ImageId}", enriched, books.Count, imageId);
+            LogCandidatesEnriched(_logger, enriched, books.Count, imageId);
         }
 
         stopwatch.Stop();
@@ -88,4 +88,10 @@ public sealed class BookshelfProcessingService : IBookshelfProcessingService
         await stream.CopyToAsync(buffer, cancellationToken).ConfigureAwait(false);
         return buffer.ToArray();
     }
+
+    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Vision model identified {Count} book(s) for image {ImageId}")]
+    private static partial void LogBooksIdentified(ILogger logger, int count, Guid imageId);
+
+    [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "Enriched {Enriched}/{Total} candidates for image {ImageId}")]
+    private static partial void LogCandidatesEnriched(ILogger logger, int enriched, int total, Guid imageId);
 }

@@ -139,7 +139,7 @@ public sealed class ImageUploadValidator : IImageUploadValidator
 
     internal static ValidationProblem CreateValidationProblem(string key, string message)
     {
-        var errors = new Dictionary<string, string[]> { [key] = new[] { message } };
+        var errors = new Dictionary<string, string[]>(StringComparer.Ordinal) { [key] = new[] { message } };
         return TypedResults.ValidationProblem(errors);
     }
 

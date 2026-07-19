@@ -15,7 +15,7 @@ public class VisionProviderSelectionTests
     [Fact]
     public void AddBookshelfReader_DefaultsToClaudeProvider()
     {
-        ServiceProvider provider = BuildProvider(new Dictionary<string, string?>
+        ServiceProvider provider = BuildProvider(new Dictionary<string, string?>(StringComparer.Ordinal)
         {
             ["ClaudeVision:ApiKey"] = "test-api-key"
         });
@@ -31,7 +31,7 @@ public class VisionProviderSelectionTests
     [InlineData("OPENAI")]
     public void AddBookshelfReader_WhenProviderIsOpenAI_ResolvesOpenAIReader(string providerValue)
     {
-        ServiceProvider provider = BuildProvider(new Dictionary<string, string?>
+        ServiceProvider provider = BuildProvider(new Dictionary<string, string?>(StringComparer.Ordinal)
         {
             ["Vision:Provider"] = providerValue,
             ["OpenAIVision:ApiKey"] = "openai-key"
@@ -47,7 +47,7 @@ public class VisionProviderSelectionTests
     [InlineData("gemini")]
     public void AddBookshelfReader_WhenProviderIsGemini_ResolvesGeminiReader(string providerValue)
     {
-        ServiceProvider provider = BuildProvider(new Dictionary<string, string?>
+        ServiceProvider provider = BuildProvider(new Dictionary<string, string?>(StringComparer.Ordinal)
         {
             ["Vision:Provider"] = providerValue,
             ["GeminiVision:ApiKey"] = "gemini-key"
@@ -65,7 +65,7 @@ public class VisionProviderSelectionTests
         Environment.SetEnvironmentVariable("ANTHROPIC_API_KEY", null);
         try
         {
-            ServiceProvider provider = BuildProvider(new Dictionary<string, string?>
+            ServiceProvider provider = BuildProvider(new Dictionary<string, string?>(StringComparer.Ordinal)
             {
                 ["Vision:Provider"] = "OpenAI",
                 ["OpenAIVision:ApiKey"] = "openai-key"
@@ -88,7 +88,7 @@ public class VisionProviderSelectionTests
         Environment.SetEnvironmentVariable("OPENAI_API_KEY", null);
         try
         {
-            ServiceProvider provider = BuildProvider(new Dictionary<string, string?>
+            ServiceProvider provider = BuildProvider(new Dictionary<string, string?>(StringComparer.Ordinal)
             {
                 ["Vision:Provider"] = "OpenAI"
             });
@@ -111,7 +111,7 @@ public class VisionProviderSelectionTests
         Environment.SetEnvironmentVariable("OPENAI_API_KEY", "env-openai-key");
         try
         {
-            ServiceProvider provider = BuildProvider(new Dictionary<string, string?>
+            ServiceProvider provider = BuildProvider(new Dictionary<string, string?>(StringComparer.Ordinal)
             {
                 ["Vision:Provider"] = "OpenAI"
             });
@@ -133,7 +133,7 @@ public class VisionProviderSelectionTests
         Environment.SetEnvironmentVariable("GEMINI_API_KEY", null);
         try
         {
-            ServiceProvider provider = BuildProvider(new Dictionary<string, string?>
+            ServiceProvider provider = BuildProvider(new Dictionary<string, string?>(StringComparer.Ordinal)
             {
                 ["Vision:Provider"] = "Gemini"
             });
@@ -156,7 +156,7 @@ public class VisionProviderSelectionTests
         Environment.SetEnvironmentVariable("GEMINI_API_KEY", "env-gemini-key");
         try
         {
-            ServiceProvider provider = BuildProvider(new Dictionary<string, string?>
+            ServiceProvider provider = BuildProvider(new Dictionary<string, string?>(StringComparer.Ordinal)
             {
                 ["Vision:Provider"] = "Gemini"
             });
@@ -174,7 +174,7 @@ public class VisionProviderSelectionTests
     [Fact]
     public void AddBookshelfReader_WhenProviderIsUnknown_ThrowsValidationException()
     {
-        ServiceProvider provider = BuildProvider(new Dictionary<string, string?>
+        ServiceProvider provider = BuildProvider(new Dictionary<string, string?>(StringComparer.Ordinal)
         {
             ["Vision:Provider"] = "Llama"
         });
@@ -188,7 +188,7 @@ public class VisionProviderSelectionTests
     [Fact]
     public void AddBookshelfReader_WhenProviderIsOpenAI_RejectsNonHttpsBaseUrl()
     {
-        ServiceProvider provider = BuildProvider(new Dictionary<string, string?>
+        ServiceProvider provider = BuildProvider(new Dictionary<string, string?>(StringComparer.Ordinal)
         {
             ["Vision:Provider"] = "OpenAI",
             ["OpenAIVision:ApiKey"] = "openai-key",
