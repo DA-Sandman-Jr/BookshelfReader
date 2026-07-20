@@ -1,5 +1,17 @@
 # BookshelfReader - Agent Instructions
 
+<!-- B44 ORGANIZATION GUIDANCE: START -->
+## B44 Organization Guidance
+
+- `AGENTS.md` files are auto-generated from sibling `CLAUDE.md` by the opt-in `B44.Standards` build target. Edit the `CLAUDE.md`, not the `AGENTS.md`.
+- Before editing or reviewing a file, read and follow every applicable `CLAUDE.md` from the repository root through that file's directory. Nearer instructions override broader instructions.
+- Analyzer severities live in the `B44.Standards` packaged globalconfig, never in a repository `.editorconfig`. Repository editorconfigs own style and whitespace only; tune analyzer policy upstream in the package.
+- Fix shared behavior in the B44 package that owns it, then deliberately update the consuming package version. Do not fork or paste a local copy into a consumer repository.
+- Treat roughly 350 physical lines as a review warning for production source files. New production files should normally stay at or below 500 lines; files above 650 lines require a clear cohesion-based reason.
+- Existing oversized files must not grow unless the same change performs a real extraction and leaves the file smaller. Coordinators coordinate; do not evade the limit with cosmetic partial classes, one-method services, generic utility dumping grounds, or needless factories.
+- Before automated analyzer fixes, baseline measurement, scripted bulk text rewrites, or consuming a freshly published package, read `.b44/B44.Tooling.md`.
+<!-- B44 ORGANIZATION GUIDANCE: END -->
+
 BookshelfReader provides .NET 8 dependency-injection helpers and optional API endpoint mappings for a bookshelf image parsing pipeline: upload validation, pluggable vision book reading (Claude, OpenAI, or Gemini), genre classification, and Open Library lookup with in-pipeline metadata enrichment.
 
 ## Commands

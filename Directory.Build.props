@@ -1,5 +1,12 @@
 <Project>
   <PropertyGroup>
+    <!-- Opt in to synchronized B44 organization guidance. The packable library
+         is the stable once-per-build synchronization anchor. -->
+    <B44AgentSyncEnabled>true</B44AgentSyncEnabled>
+    <B44AgentGuidanceProfile>Organization</B44AgentGuidanceProfile>
+    <B44AgentRepositoryRoot>$(MSBuildThisFileDirectory)</B44AgentRepositoryRoot>
+    <B44AgentSyncProject>$(MSBuildThisFileDirectory)BookshelfReader\BookshelfReader.csproj</B44AgentSyncProject>
+
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
     <!-- Surface editorconfig style/naming violations at build time so CI and
@@ -33,6 +40,6 @@
 
   <!-- Studio-wide code-quality analyzer rollout. -->
   <ItemGroup>
-    <PackageReference Include="B44.Standards" Version="0.4.5" PrivateAssets="all" />
+    <PackageReference Include="B44.Standards" Version="0.4.6" PrivateAssets="all" />
   </ItemGroup>
 </Project>
