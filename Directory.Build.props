@@ -9,6 +9,7 @@
 
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- Surface editorconfig style/naming violations at build time so CI and
          local `dotnet build` catch drift instead of waiting for `dotnet format`. -->
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
