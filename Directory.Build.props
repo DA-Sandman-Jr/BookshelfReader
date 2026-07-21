@@ -9,6 +9,7 @@
 
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
+    <B44SecuritySensitive Condition="'$(MSBuildProjectName)' == 'BookshelfReader'">true</B44SecuritySensitive>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- Surface editorconfig style/naming violations at build time so CI and
          local `dotnet build` catch drift instead of waiting for `dotnet format`. -->
@@ -41,6 +42,6 @@
 
   <!-- Studio-wide code-quality analyzer rollout. -->
   <ItemGroup>
-    <PackageReference Include="B44.Standards" Version="0.5.*" PrivateAssets="all" />
+    <PackageReference Include="B44.Standards" Version="0.6.*" PrivateAssets="all" />
   </ItemGroup>
 </Project>
