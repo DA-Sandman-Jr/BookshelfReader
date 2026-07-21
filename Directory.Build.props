@@ -40,6 +40,6 @@
 
   <!-- Studio-wide code-quality analyzer rollout. -->
   <ItemGroup>
-    <PackageReference Include="B44.Standards" Version="0.4.*" PrivateAssets="all" />
+    <PackageReference Include="B44.Standards" Version="0.5.*" PrivateAssets="all" />
   </ItemGroup>
 </Project>
