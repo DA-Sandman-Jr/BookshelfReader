@@ -113,7 +113,7 @@ Configuration lives in `BookshelfReader.Host/appsettings.json` with environment-
 
 Production deployments should inject secrets through your platform's secret store (Azure Key Vault, AWS Secrets Manager, GitHub Actions secrets to environment variables). Only ship sanitized sample values in source control. The development profile (`appsettings.Development.json`) demonstrates setting a disposable key (`local-dev-key`).
 
-Create a dedicated console workspace and API key for whichever provider you select, with its own spend limit, so usage and billing stay isolated. At Claude `claude-haiku-4-5` pricing, a typical bookshelf photo costs roughly $0.003-$0.005 per request; OpenAI `gpt-4o-mini` and Gemini `gemini-2.0-flash` are comparable low-cost vision models, with exact costs varying by provider and image size.
+Create a dedicated console workspace and API key for whichever provider you select, with its own spend limit, so usage and billing stay isolated. Model availability and pricing change independently of this project; verify both with the provider before deploying.
 
 ### Sample `.env` (development)
 

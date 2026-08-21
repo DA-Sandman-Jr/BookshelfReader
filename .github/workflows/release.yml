@@ -14,7 +14,7 @@ jobs:
     # Trusted Publishing: no long-lived API key. The job's OIDC token is
     # exchanged for a one-hour nuget.org API key against the trusted publishing
     # policy configured on nuget.org (repository owner DA-Sandman-Jr,
-    # repository BookcaseReader, workflow file release.yml).
+    # repository BookshelfReader, workflow file release.yml).
     permissions:
       id-token: write
       contents: read
