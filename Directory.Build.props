@@ -27,13 +27,13 @@
        a local-pack default; the release workflow overrides it from the git tag
        (-p:Version). -->
   <PropertyGroup>
-    <Version>3.0.0</Version>
+    <Version>3.2.0</Version>
     <Authors>David Sanders</Authors>
     <Company>David Sanders</Company>
     <Copyright>Copyright © David Sanders</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/DA-Sandman-Jr/BookcaseReader</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/DA-Sandman-Jr/BookcaseReader.git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/DA-Sandman-Jr/BookshelfReader</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/DA-Sandman-Jr/BookshelfReader.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>

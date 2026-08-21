@@ -109,7 +109,7 @@ public static class BookshelfReaderServiceCollectionExtensions
             // Open Library's API guidelines ask clients to identify themselves;
             // anonymous high-volume traffic risks throttling.
             string userAgent = configuration["OpenLibrary:UserAgent"]
-                ?? "BookshelfReader/1.0 (+https://github.com/DA-Sandman-Jr/BookcaseReader)";
+                ?? "BookshelfReader/1.0 (+https://github.com/DA-Sandman-Jr/BookshelfReader)";
             client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", userAgent);
         });
 
