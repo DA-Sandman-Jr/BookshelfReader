@@ -7,6 +7,15 @@
     <B44AgentRepositoryRoot>$(MSBuildThisFileDirectory)</B44AgentRepositoryRoot>
     <B44AgentSyncProject>$(MSBuildThisFileDirectory)BookshelfReader\BookshelfReader.csproj</B44AgentSyncProject>
 
+    <!-- Repository hygiene and the analyzer-suppression ratchet. This
+         repository does not run the source-size ratchet, so they carry their
+         own anchor: the same project the guidance sync uses. -->
+    <B44HygieneEnabled>true</B44HygieneEnabled>
+    <B44HygieneProject>$(B44AgentSyncProject)</B44HygieneProject>
+    <B44HygieneRepositoryRoot>$(MSBuildThisFileDirectory)</B44HygieneRepositoryRoot>
+    <B44SuppressionBudget>0</B44SuppressionBudget>
+    <B44WarningPolicy>true</B44WarningPolicy>
+
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
     <B44SecuritySensitive Condition="'$(MSBuildProjectName)' == 'BookshelfReader'">true</B44SecuritySensitive>
@@ -42,6 +51,6 @@
 
   <!-- Studio-wide code-quality analyzer rollout. -->
   <ItemGroup>
-    <PackageReference Include="B44.Standards" Version="0.6.*" PrivateAssets="all" />
+    <PackageReference Include="B44.Standards" Version="0.12.*" PrivateAssets="all" />
   </ItemGroup>
 </Project>
