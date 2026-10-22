@@ -12,6 +12,28 @@ namespace BookshelfReader.Tests.DependencyInjection;
 
 public class VisionProviderSelectionTests
 {
+    [Theory]
+    [InlineData("Claude", "ClaudeVision")]
+    [InlineData("OpenAI", "OpenAIVision")]
+    [InlineData("Gemini", "GeminiVision")]
+    public void AddBookshelfReader_ProviderHttpClientsDoNotForwardKeysAcrossRedirects(string selectedProvider, string section)
+    {
+        using ServiceProvider provider = BuildProvider(new Dictionary<string, string?>(StringComparer.Ordinal)
+        {
+            ["Vision:Provider"] = selectedProvider,
+            [$"{section}:ApiKey"] = "test-api-key"
+        });
+
+        IHttpMessageHandlerFactory factory = provider.GetRequiredService<IHttpMessageHandlerFactory>();
+        HttpMessageHandler handler = factory.CreateHandler(nameof(IVisionBookReader));
+        while (handler is DelegatingHandler delegatingHandler)
+        {
+            handler = delegatingHandler.InnerHandler!;
+        }
+
+        handler.Should().BeOfType<HttpClientHandler>().Which.AllowAutoRedirect.Should().BeFalse();
+    }
+
     [Fact]
     public void AddBookshelfReader_DefaultsToClaudeProvider()
     {

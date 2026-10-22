@@ -24,7 +24,7 @@
 - Keep licensing boundaries explicit. Source governed by terms different from a repository's `LICENSE` belongs behind a separately documented repository/package boundary with its provenance and required notices intact.
 <!-- B44 ORGANIZATION GUIDANCE: END -->
 
-BookshelfReader provides .NET 8 dependency-injection helpers and optional API endpoint mappings for a bookshelf image parsing pipeline: upload validation, pluggable vision book reading (Claude, OpenAI, or Gemini), genre classification, and Open Library lookup with in-pipeline metadata enrichment.
+BookshelfReader provides .NET 10 dependency-injection helpers and optional API endpoint mappings for a bookshelf image parsing pipeline: upload validation, pluggable vision book reading (Claude, OpenAI, or Gemini), genre classification, and Open Library lookup with in-pipeline metadata enrichment.
 
 ## Commands
 
@@ -55,7 +55,7 @@ dotnet run --project BookshelfReader.Host
 Pack the NuGet payloads:
 
 ```bash
-dotnet pack BookshelfReader.sln -c Release
+dotnet pack BookshelfReader/BookshelfReader.csproj -c Release
 ```
 
 ## Architecture

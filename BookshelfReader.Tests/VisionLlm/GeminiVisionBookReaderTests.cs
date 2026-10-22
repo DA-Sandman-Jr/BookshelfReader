@@ -16,7 +16,7 @@ namespace BookshelfReader.Tests.VisionLlm;
 public class GeminiVisionBookReaderTests
 {
     private const string Endpoint =
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent";
 
     private static readonly byte[] TestImageBytes = CreateJpegBytes();
 

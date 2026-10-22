@@ -183,7 +183,7 @@ public sealed partial class ClaudeVisionBookReader : IVisionBookReader
             LogStructuredOutputParseFailed(_logger, ex);
         }
 
-        var result = new VisionReadResult();
+        var result = new VisionReadResult { Model = _options.Model };
 
         if (payload is not null)
         {

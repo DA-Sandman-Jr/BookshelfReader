@@ -49,6 +49,23 @@ public class BookshelfProcessingServiceTests
     }
 
     [Fact]
+    public async Task ProcessAsync_ReportsSelectedModelInsteadOfClaudeDefault()
+    {
+        var visionReader = new StubVisionBookReader(new VisionReadResult
+        {
+            Model = "selected-provider-model",
+            Books = { new VisionBookEntry("Dune", "Frank Herbert", 0.95) }
+        });
+        BookshelfProcessingService service = CreateService(visionReader, new RecordingEnrichmentService());
+        using var stream = new MemoryStream();
+
+        ParseResult result = await service.ProcessAsync(stream);
+
+        result.Books[0].Notes.Should().Contain("Read by vision model selected-provider-model");
+        result.Books[0].Notes.Should().NotContain(note => note.Contains("claude-haiku"));
+    }
+
+    [Fact]
     public async Task ProcessAsync_WhenNoBooksFound_SkipsEnrichmentAndReturnsEmptyResult()
     {
         var visionReader = new StubVisionBookReader(new VisionReadResult());

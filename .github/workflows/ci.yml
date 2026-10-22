@@ -7,30 +7,35 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build-test-pack:
     runs-on: windows-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v6
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 10.0.x
 
       - name: Restore
         run: dotnet restore BookshelfReader.sln
 
       - name: Build
-        run: dotnet build BookshelfReader.sln -c Release --no-restore
+        run: dotnet build BookshelfReader.sln -c Release --no-restore -p:B44AgentSyncVerifyOnly=true /nodeReuse:false -p:UseSharedCompilation=false -m:1
 
       - name: Test
-        run: dotnet test BookshelfReader.sln -c Release --no-build --verbosity minimal
+        run: dotnet test BookshelfReader.sln -c Release --no-build --verbosity minimal /nodeReuse:false -p:UseSharedCompilation=false -m:1
 
       - name: Pack packages
-        run: dotnet pack BookshelfReader.sln -c Release --no-build --output ./nupkgs
+        run: dotnet pack BookshelfReader/BookshelfReader.csproj -c Release --no-build --output ./nupkgs
 
       - name: Verify the package was produced
         shell: pwsh
@@ -40,7 +45,7 @@ jobs:
           }
 
       - name: Upload NuGet packages
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: nuget-packages
           path: nupkgs/*.nupkg

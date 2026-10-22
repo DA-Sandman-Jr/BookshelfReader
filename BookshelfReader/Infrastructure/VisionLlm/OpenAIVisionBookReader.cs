@@ -124,6 +124,6 @@ public sealed class OpenAIVisionBookReader : IVisionBookReader
         string? booksJson = choice?.Message?.Content;
         bool wasTruncated = string.Equals(choice?.FinishReason, "length", StringComparison.Ordinal);
 
-        return VisionResultParser.Parse(booksJson, wasTruncated, _logger, _options.MaxTokens);
+        return VisionResultParser.Parse(booksJson, wasTruncated, _logger, _options.MaxTokens, _options.Model);
     }
 }
