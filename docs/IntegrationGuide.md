@@ -4,6 +4,8 @@ This guide explains how to consume the BookshelfReader service from another web 
 
 ## 1. Runtime surface
 
+Version 4 requires a patched .NET 10 runtime and Windows. Upgrade version 3 hosts from .NET 8 before installing this version. The package includes the native OpenCV Windows runtime; JPEG/PNG dimensions are checked with MetadataExtractor before pixel decoding.
+
 ### Supported commands
 
 | Scenario | Command |
@@ -13,7 +15,7 @@ This guide explains how to consume the BookshelfReader service from another web 
 | Test suite | `dotnet test`
 | Production build artifact | `dotnet publish BookshelfReader.Host -c Release`
 
-Running `dotnet run --project BookshelfReader.Host` starts Kestrel on the default HTTPS port (`https://localhost:5001`) and HTTP port (`http://localhost:5000`). Swagger UI is automatically exposed in Development.
+Configure listening addresses explicitly with `ASPNETCORE_URLS` (for example, `https://localhost:5001;http://localhost:5000`) and configure a development certificate for HTTPS. `dotnet run --project BookshelfReader.Host` otherwise uses ASP.NET Core's defaults; this repository has no launch profile. Swagger UI is exposed only in Development.
 
 ### HTTP endpoints
 
@@ -60,7 +62,7 @@ All routes are rooted at `/api` and described by the generated OpenAPI document 
 
 When enrichment is enabled (the default), the service looks up each parsed title against Open Library inside the parse request and attaches the best catalog match as `metadata` - canonical title, author, first publish year, ISBN, cover image URL, and subjects (which also feed the `genres` list). `metadata` is `null` when no confident match was found; the candidate's `notes` explain why (no results, low match score, or lookup failure). Callers that prefer to orchestrate their own lookups can set `Enrichment:Enabled` to `false` and use `/api/books/lookup` per title instead. Enrichment adds outbound Open Library calls to parse latency, so expect parse requests to take a few seconds longer for shelves with many readable spines.
 
-Requests that violate validation (missing file, unsupported MIME type, oversized image, undecodable image, etc.) return `400` responses with RFC 7807 bodies. When `RequireApiKey` is enabled the parse endpoint also returns `401` for missing or invalid keys, and when parse rate limiting is enabled it returns `429 Too Many Requests` plus a `Retry-After` header once callers exceed the configured limit. If the Claude vision API rejects the request (bad upstream API key, rate limiting, or a server-side error) the parse endpoint returns a `502`/`429`/`5xx` ProblemDetails response describing the upstream failure.
+Requests that violate validation (missing file, extra files or form fields, unsupported MIME type, oversized image, undecodable image, etc.) return `400` responses with ProblemDetails bodies. Server-level request limits may reject oversized bodies with `413` before the handler runs. When `RequireApiKey` is enabled the parse endpoint also returns `401` for missing or invalid keys, and when parse rate limiting is enabled it returns `429 Too Many Requests` plus a `Retry-After` header once callers exceed the configured limit. Provider failures, including upstream authentication failures, throttling, and timeouts, return a sanitized `502` ProblemDetails response. Upstream error details are logged server-side and are not exposed to callers.
 
 ### How book reading works
 
@@ -72,13 +74,17 @@ The vision provider is pluggable via `Vision:Provider` (`Claude` (default), `Ope
 | --- | --- | --- | --- | --- |
 | `Claude` (default) | [Anthropic Messages API](https://docs.anthropic.com/) (`POST /v1/messages`) | `claude-haiku-4-5` | base64 image block | `output_config` JSON schema. Anthropic does not train on API inputs. |
 | `OpenAI` | Chat Completions (`POST /v1/chat/completions`) | `gpt-4o-mini` | base64 `image_url` data URL | `response_format: json_object` |
-| `Gemini` | Generative Language API (`POST v1beta/models/{model}:generateContent`) | `gemini-2.0-flash` | base64 `inline_data` | `generationConfig.responseMimeType: application/json` |
+| `Gemini` | Generative Language API (`POST v1beta/models/{model}:generateContent`) | `gemini-3.6-flash` | base64 `inline_data` | `generationConfig.responseMimeType: application/json` |
 
 Capability notes: the default models for all three providers accept images well above BookshelfReader's `MaxImageDimension` (1568 px longest edge), so the configured downscale is the effective ceiling. OpenAI and Gemini use native JSON-mode/structured-output settings plus an explicit JSON instruction in the prompt (Claude additionally constrains output with a JSON schema); the readers tolerate prose or code-fence wrapping around the JSON object. Error handling (401/403 key rejection, 429 rate limiting, 5xx server errors, timeouts) is normalized across providers to the same `VisionBookReaderException` messages.
 
 ## 2. Configuration & secrets
 
 Configuration lives in `BookshelfReader.Host/appsettings.json` with environment-specific overrides in `appsettings.<Environment>.json`. Every option is also bindable via environment variables, which is the preferred mechanism for production secrets.
+
+The reference host enables `Authentication:ApiKey:RequireApiKey` by default and fails startup until a valid key is configured. The embedding library keeps API-key enforcement opt-in; consumers should enable it for public parse endpoints. `appsettings.Development.json` supplies `local-dev-key` for local development only. Provider clients do not follow HTTP redirects, so custom provider gateways must serve requests directly at the configured HTTPS base URL. Responses are capped at 1 MiB for vision providers and 4 MiB for Open Library to bound buffering.
+
+Gemini's default is now `gemini-3.6-flash`; replace explicit `gemini-2.0-flash` overrides, because Google has [shut down that model](https://ai.google.dev/gemini-api/docs/deprecations). Claude remains the default provider.
 
 | Setting | Description | Environment variable example |
 | --- | --- | --- |
@@ -93,7 +99,8 @@ Configuration lives in `BookshelfReader.Host/appsettings.json` with environment-
 | `Enrichment:Enabled` | Attach Open Library metadata to parse results in-pipeline (default `true`). | `Enrichment__Enabled=true`
 | `Enrichment:MaxConcurrentLookups` | Concurrent Open Library lookups per parse request (1-16). | `Enrichment__MaxConcurrentLookups=4`
 | `Enrichment:MinMatchScore` | Minimum fuzzy match score (0-100) before metadata is attached. | `Enrichment__MinMatchScore=55`
-| `Uploads:MaxBytes` | Maximum upload size in bytes. | `Uploads__MaxBytes=10485760`
+| `Uploads:MaxBytes` | Maximum image size in bytes (1 byte to 20 MiB); entire multipart requests are capped at this value plus 64 KiB, including chunked uploads. | `Uploads__MaxBytes=10485760`
+| `Uploads:MaxImagePixels` | Maximum width times height checked before decoding (default 25,000,000; maximum 50,000,000). | `Uploads__MaxImagePixels=25000000`
 | `Uploads:AllowedContentTypes` | Canonical MIME types accepted from the form upload. | `Uploads__AllowedContentTypes__0=image/jpeg`
 | `Vision:Provider` | Vision backend: `Claude` (default), `OpenAI`, or `Gemini`. Only the selected provider's section is bound/validated. | `Vision__Provider=OpenAI`
 | `ClaudeVision:ApiKey` | Anthropic API key (used when provider is `Claude`). Falls back to `ANTHROPIC_API_KEY`. Required for this provider - the host fails fast at startup without one. | `ANTHROPIC_API_KEY=sk-ant-...`
@@ -108,7 +115,7 @@ Configuration lives in `BookshelfReader.Host/appsettings.json` with environment-
 | `OpenAIVision:MaxTokens` / `TimeoutSeconds` / `MaxImageDimension` | Same meanings/defaults (`2048`/`60`/`1568`) as the Claude options. | `OpenAIVision__MaxTokens=2048`
 | `GeminiVision:ApiKey` | Gemini API key (used when provider is `Gemini`). Falls back to `GEMINI_API_KEY`. Required for this provider. | `GEMINI_API_KEY=...`
 | `GeminiVision:BaseUrl` | Gemini API base URL (must be HTTPS, default `https://generativelanguage.googleapis.com/`). | `GeminiVision__BaseUrl=https://generativelanguage.googleapis.com/`
-| `GeminiVision:Model` | Multimodal Gemini model (default `gemini-2.0-flash`). | `GeminiVision__Model=gemini-2.0-flash`
+| `GeminiVision:Model` | Multimodal Gemini model (default `gemini-3.6-flash`). | `GeminiVision__Model=gemini-3.6-flash`
 | `GeminiVision:MaxTokens` / `TimeoutSeconds` / `MaxImageDimension` | Same meanings/defaults (`2048`/`60`/`1568`) as the Claude options. | `GeminiVision__MaxTokens=2048`
 
 Production deployments should inject secrets through your platform's secret store (Azure Key Vault, AWS Secrets Manager, GitHub Actions secrets to environment variables). Only ship sanitized sample values in source control. The development profile (`appsettings.Development.json`) demonstrates setting a disposable key (`local-dev-key`).
@@ -136,8 +143,8 @@ Load it with `dotnet user-secrets`, `direnv`, or your preferred tooling.
 ## 3. Integration contract
 
 1. **Authentication** - When `RequireApiKey` is `true`, callers must include `X-API-Key: <value>` (or your configured header) on every `POST /api/bookshelf/parse` request. The lookup endpoint is anonymous by default.
-2. **Payloads** - The upload endpoint requires `multipart/form-data` with a single `image` file field. JPEG and PNG inputs are accepted out of the box. The service streams files directly from the request and rejects payloads larger than the configured limit or whose signatures do not match the MIME type.
-3. **Response shape** - Use the `ParseResult` schema above. Bounding boxes are relative to the uploaded image, enabling downstream UI overlays.
+2. **Payloads** - The upload endpoint requires `multipart/form-data` with exactly one `image` file field and no additional form fields. JPEG and PNG inputs are accepted out of the box. Image bytes and the total request size are bounded in memory, and signatures must match the MIME type.
+3. **Response shape** - Use the `ParseResult` schema above. Bounding boxes remain empty because the vision models return titles and authors without spine coordinates.
 4. **Errors** - Validation problems use the standard ASP.NET Core RFC 7807 schema with `errors` dictionary. Treat `401` as missing or invalid credentials, `429` plus `Retry-After` as a rate-limit backoff signal, other 4xx codes as actionable client fixes, and 5xx codes as transient failures worth retrying.
 5. **OpenAPI** - Consume `/swagger/v1/swagger.json` to generate typed clients (NSwag, AutoRest, openapi-typescript). Regenerate clients whenever the service bumps its version.
 
@@ -151,7 +158,7 @@ BookshelfReader does not ship standalone UI assets. The recommended integration 
 ## 4. Deployment boundaries
 
 * Package and deploy the service independently (App Service, container app, Kubernetes workload, etc.).
-* Do not share infrastructure resources (storage, queues) with the host site unless absolutely necessary; BookshelfReader is stateless and depends only on outbound HTTPS to the Anthropic API and Open Library. Uploaded images are processed in memory and never written to disk.
+* BookshelfReader is stateless and uses outbound HTTPS to the selected vision provider and Open Library. Uploaded images are processed in memory and never written to disk. Apply request, concurrency, and rate limits at your ingress to bound resource use across clients.
 * Expose the service via a dedicated subdomain (e.g., `https://bookshelf-reader.yourdomain.com`) or a reverse-proxy path segment. Ensure TLS termination happens at the edge the same way as your primary site.
 * If you front the service with an ingress controller or API gateway, forward the `X-API-Key` header without modification and enforce rate limits upstream.
 
@@ -172,19 +179,19 @@ Troubleshooting tips:
 * **400 Bad Request** - Ensure the file field name is exactly `image` and the MIME type is allowed.
 * **Large file rejection** - Increase `Uploads:MaxBytes` temporarily during debugging.
 * **Host fails at startup** - the selected provider's API key is required (`ClaudeVision:ApiKey`/`ANTHROPIC_API_KEY`, `OpenAIVision:ApiKey`/`OPENAI_API_KEY`, or `GeminiVision:ApiKey`/`GEMINI_API_KEY`); the host validates options on start and will not boot without a key for the configured `Vision:Provider`. An unrecognized `Vision:Provider` value also fails startup with a message listing the valid choices.
-* **Vision request errors** - `401`/`403` means the configured API key was rejected; `429`/`529` mean the provider is rate limiting or overloaded - all surface to callers as ProblemDetails responses with the upstream message included, regardless of provider.
+* **Vision request errors** - The parse endpoint returns sanitized `502` ProblemDetails responses for provider failures. Inspect server logs to distinguish a rejected provider key (`401`/`403`), provider throttling/overload (`429`/`529`), and network or timeout failures. The parse endpoint's own `401` and `429` still indicate caller authentication and local rate limiting.
 
 ## 6. Validation & CI expectations
 
-The repository targets .NET 8. A healthy pipeline should execute:
+The repository targets .NET 10 LTS. Keep the SDK and deployed runtime on current servicing patches; .NET 8 [reaches end of support on November 10, 2026](https://dotnet.microsoft.com/en-us/platform/support/policy). A healthy pipeline should execute:
 
 ```
 dotnet restore
-dotnet build --configuration Release
+dotnet build --configuration Release --no-restore -p:B44AgentSyncVerifyOnly=true
 dotnet test --configuration Release --no-build
 ```
 
-Consider publishing a Docker image (`dotnet publish -c Release -o out && docker build`) or versioned release artifacts. Tag releases using semantic versioning (e.g., `v1.4.0`) so the host site can pin to a known build.
+Publish on Windows, or use a Windows container with the native runtime requirements installed. Linux containers are not supported by this package. Tag releases using semantic versioning (e.g., `v4.0.0`) so the host site can pin to a known build. NuGet audits direct and transitive packages during restore and fails on known vulnerabilities; Dependabot checks NuGet packages and pinned GitHub Actions weekly.
 
 ## 7. Release coordination
 

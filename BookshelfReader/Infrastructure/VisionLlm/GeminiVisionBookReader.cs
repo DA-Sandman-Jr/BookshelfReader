@@ -124,6 +124,6 @@ public sealed class GeminiVisionBookReader : IVisionBookReader
         string? booksJson = candidate?.Content?.Parts.FirstOrDefault(part => !string.IsNullOrWhiteSpace(part.Text))?.Text;
         bool wasTruncated = string.Equals(candidate?.FinishReason, "MAX_TOKENS", StringComparison.Ordinal);
 
-        return VisionResultParser.Parse(booksJson, wasTruncated, _logger, _options.MaxTokens);
+        return VisionResultParser.Parse(booksJson, wasTruncated, _logger, _options.MaxTokens, _options.Model);
     }
 }

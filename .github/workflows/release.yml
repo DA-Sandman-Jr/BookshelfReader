@@ -7,8 +7,7 @@ on:
 
 jobs:
   publish:
-    # windows-latest is required: the Infrastructure package pulls in the
-    # Windows-only native dependency OpenCvSharp4.Windows.
+    # The package includes the Windows-only OpenCV native runtime.
     runs-on: windows-latest
 
     # Trusted Publishing: no long-lived API key. The job's OIDC token is
@@ -21,28 +20,35 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v6
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: '10.0.x'
 
       - name: Derive version from tag
-        shell: bash
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME -replace '^v', ''
+          if ($version -notmatch '^\d+\.\d+\.\d+(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?$') {
+            throw "Release tag must contain a semantic version."
+          }
+          "VERSION=$version" >> $env:GITHUB_ENV
 
       - name: Restore
         run: dotnet restore BookshelfReader.sln
 
       - name: Build
-        run: dotnet build BookshelfReader.sln --configuration Release --no-restore -p:Version=$env:VERSION
+        run: dotnet build BookshelfReader.sln --configuration Release --no-restore -p:Version=$env:VERSION -p:B44AgentSyncVerifyOnly=true /nodeReuse:false -p:UseSharedCompilation=false -m:1
 
       - name: Test
-        run: dotnet test BookshelfReader.sln --configuration Release --no-build --verbosity minimal
+        run: dotnet test BookshelfReader.sln --configuration Release --no-build --verbosity minimal /nodeReuse:false -p:UseSharedCompilation=false -m:1
 
       - name: Pack
-        run: dotnet pack BookshelfReader.sln --configuration Release --no-build -p:Version=$env:VERSION --output ./nupkgs
+        run: dotnet pack BookshelfReader/BookshelfReader.csproj --configuration Release --no-build -p:Version=$env:VERSION --output ./nupkgs
 
       - name: Verify the package was produced
         shell: pwsh
@@ -53,7 +59,7 @@ jobs:
 
       # Request the temp key right before the push; it expires after an hour.
       - name: NuGet login (OIDC -> temp API key)
-        uses: NuGet/login@v1
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1
         id: login
         with:
           user: ${{ secrets.NUGET_USER }}
@@ -68,4 +74,7 @@ jobs:
               --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" `
               --source https://api.nuget.org/v3/index.json `
               --skip-duplicate
+            if ($LASTEXITCODE -ne 0) {
+              throw "NuGet push failed for $($pkg.Name)."
+            }
           }

@@ -1,14 +1,17 @@
 using System.Buffers;
 using BookshelfReader.Core.Options;
+using MetadataExtractor;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Options;
-using SixLabors.ImageSharp;
+using Microsoft.Net.Http.Headers;
 
 namespace BookshelfReader.Api.Validation;
 
 public sealed class ImageUploadValidator : IImageUploadValidator
 {
+    private const int MultipartOverheadBytes = 64 * 1024;
     private readonly UploadsOptions _uploadsOptions;
 
     public ImageUploadValidator(IOptions<UploadsOptions> uploadsOptions)
@@ -18,7 +21,8 @@ public sealed class ImageUploadValidator : IImageUploadValidator
 
     public async Task<UploadValidationResult> ValidateImageUploadAsync(HttpRequest request, CancellationToken cancellationToken)
     {
-        if (!request.HasFormContentType)
+        if (!MediaTypeHeaderValue.TryParse(request.ContentType, out MediaTypeHeaderValue? contentType)
+            || !contentType.MediaType.Equals("multipart/form-data", StringComparison.OrdinalIgnoreCase))
         {
             return UploadValidationResult.Failure("Content-Type", "multipart/form-data content type required.");
         }
@@ -26,11 +30,25 @@ public sealed class ImageUploadValidator : IImageUploadValidator
         IFormCollection form;
         try
         {
+            if (!TryLimitRequestBody(request))
+            {
+                return UploadValidationResult.Failure("image", "Uploaded form exceeds the configured request limit.");
+            }
+
             form = await request.ReadFormAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (InvalidDataException)
         {
             return UploadValidationResult.Failure("image", "Unable to read the uploaded form data.");
+        }
+        catch (IOException)
+        {
+            return UploadValidationResult.Failure("image", "Unable to read the uploaded form within the configured request limit.");
+        }
+
+        if (form.Files.Count != 1 || form.Count != 0)
+        {
+            return UploadValidationResult.Failure("image", "Exactly one image file and no additional form fields are allowed.");
         }
 
         IFormFile? file = form.Files.GetFile("image");
@@ -59,6 +77,29 @@ public sealed class ImageUploadValidator : IImageUploadValidator
         return UploadValidationResult.Success(file, canonicalContentType, _uploadsOptions.MaxBytes);
     }
 
+    private bool TryLimitRequestBody(HttpRequest request)
+    {
+        // MultipartBodyLengthLimit applies to each section. Bound the entire
+        // request as well, including chunked uploads and hosts without a limit.
+        long maxRequestBytes = (long)_uploadsOptions.MaxBytes + MultipartOverheadBytes;
+        if (request.ContentLength > maxRequestBytes
+            || request.Body.CanSeek && request.Body.Length > maxRequestBytes)
+        {
+            return false;
+        }
+
+        IHttpMaxRequestBodySizeFeature? sizeFeature = request.HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>();
+        if (sizeFeature is { IsReadOnly: false }
+            && (sizeFeature.MaxRequestBodySize is null || sizeFeature.MaxRequestBodySize > maxRequestBytes))
+        {
+            sizeFeature.MaxRequestBodySize = maxRequestBytes;
+        }
+
+        // Equal threshold and limit prevent spilling image bytes to disk.
+        request.EnableBuffering((int)maxRequestBytes, maxRequestBytes);
+        return true;
+    }
+
     public async Task<ValidationProblem?> ValidateImageSignatureAsync(
         Stream imageStream,
         string canonicalContentType,
@@ -83,24 +124,24 @@ public sealed class ImageUploadValidator : IImageUploadValidator
         {
             try
             {
-                ImageInfo? imageInfo = Image.Identify(imageStream);
-                if (imageInfo is null)
+                (int Width, int Height)? dimensions = ImageDimensionsReader.Read(imageStream);
+                if (dimensions is null || dimensions.Value.Width <= 0 || dimensions.Value.Height <= 0)
                 {
                     return CreateValidationProblem("image", "Unable to read the uploaded image metadata.");
                 }
 
-                long pixelCount = (long)imageInfo.Width * imageInfo.Height;
+                long pixelCount = (long)dimensions.Value.Width * dimensions.Value.Height;
                 if (pixelCount > _uploadsOptions.MaxImagePixels)
                 {
                     return CreateValidationProblem("image",
                         $"Uploaded image has {pixelCount:N0} pixels which exceeds the configured limit of {_uploadsOptions.MaxImagePixels:N0}.");
                 }
             }
-            catch (UnknownImageFormatException)
+            catch (ImageProcessingException)
             {
                 return CreateValidationProblem("image", "Uploaded image is not in a supported format.");
             }
-            catch (InvalidImageContentException)
+            catch (IOException)
             {
                 return CreateValidationProblem("image", "Uploaded image could not be processed.");
             }
@@ -121,7 +162,8 @@ public sealed class ImageUploadValidator : IImageUploadValidator
 
         try
         {
-            int bytesRead = await stream.ReadAsync(buffer.AsMemory(0, signatureBytes.Length), cancellationToken)
+            int bytesRead = await stream.ReadAtLeastAsync(buffer.AsMemory(0, signatureBytes.Length), signatureBytes.Length,
+                    throwOnEndOfStream: false, cancellationToken)
                 .ConfigureAwait(false);
 
             if (bytesRead < signatureBytes.Length)

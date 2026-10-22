@@ -18,7 +18,9 @@
 
     <IsPackable>false</IsPackable>
     <Nullable>enable</Nullable>
-    <B44SecuritySensitive Condition="'$(MSBuildProjectName)' == 'BookshelfReader'">true</B44SecuritySensitive>
+    <B44SecuritySensitive Condition="'$(MSBuildProjectName)' == 'BookshelfReader' Or '$(MSBuildProjectName)' == 'BookshelfReader.Host'">true</B44SecuritySensitive>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- Surface editorconfig style/naming violations at build time so CI and
          local `dotnet build` catch drift instead of waiting for `dotnet format`. -->
@@ -32,11 +34,11 @@
   </PropertyGroup>
 
   <!-- Shared NuGet package metadata. Applied to every project but only used by
-       the packable ones (Core, Infrastructure, Extensions, Api). The version is
+       the packable BookshelfReader project. The version is
        a local-pack default; the release workflow overrides it from the git tag
        (-p:Version). -->
   <PropertyGroup>
-    <Version>3.2.0</Version>
+    <Version>4.0.0</Version>
     <Authors>David Sanders</Authors>
     <Company>David Sanders</Company>
     <Copyright>Copyright © David Sanders</Copyright>

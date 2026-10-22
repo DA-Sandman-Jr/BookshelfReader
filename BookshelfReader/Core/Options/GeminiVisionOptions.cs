@@ -20,7 +20,7 @@ public sealed class GeminiVisionOptions
     /// A current multimodal Gemini model. Defaults to a fast, low-cost model that
     /// accepts image inputs.
     /// </summary>
-    public string Model { get; set; } = "gemini-2.0-flash";
+    public string Model { get; set; } = "gemini-3.6-flash";
 
     public int MaxTokens { get; set; } = 2048;
 

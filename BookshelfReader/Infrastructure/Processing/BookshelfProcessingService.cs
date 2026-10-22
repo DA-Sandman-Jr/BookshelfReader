@@ -39,7 +39,7 @@ public sealed partial class BookshelfProcessingService : IBookshelfProcessingSer
         VisionReadResult visionResult = await _visionBookReader.ReadAsync(imageData, cancellationToken).ConfigureAwait(false);
         LogBooksIdentified(_logger, visionResult.Books.Count, imageId);
 
-        var books = visionResult.Books.Select(CreateCandidate).ToList();
+        var books = visionResult.Books.Select(entry => CreateCandidate(entry, visionResult.Model ?? _visionOptions.Model)).ToList();
 
         if (books.Count > 0)
         {
@@ -62,7 +62,7 @@ public sealed partial class BookshelfProcessingService : IBookshelfProcessingSer
         };
     }
 
-    private BookCandidate CreateCandidate(VisionBookEntry entry)
+    private BookCandidate CreateCandidate(VisionBookEntry entry, string model)
     {
         string rawText = string.IsNullOrWhiteSpace(entry.Author)
             ? entry.Title
@@ -77,7 +77,7 @@ public sealed partial class BookshelfProcessingService : IBookshelfProcessingSer
         };
 
         candidate.Genres.AddRange(_genreClassifier.Classify(candidate.Title, candidate.RawText));
-        candidate.Notes.Add($"Read by vision model {_visionOptions.Model}");
+        candidate.Notes.Add($"Read by vision model {model}");
 
         return candidate;
     }

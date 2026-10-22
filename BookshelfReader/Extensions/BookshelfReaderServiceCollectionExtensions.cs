@@ -105,13 +105,14 @@ public static class BookshelfReaderServiceCollectionExtensions
 
             client.BaseAddress = baseUri;
             client.Timeout = TimeSpan.FromSeconds(10);
+            client.MaxResponseContentBufferSize = 4 * 1024 * 1024;
 
             // Open Library's API guidelines ask clients to identify themselves;
             // anonymous high-volume traffic risks throttling.
             string userAgent = configuration["OpenLibrary:UserAgent"]
                 ?? "BookshelfReader/1.0 (+https://github.com/DA-Sandman-Jr/BookshelfReader)";
             client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", userAgent);
-        });
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
 
         return services;
     }
@@ -185,9 +186,10 @@ public static class BookshelfReaderServiceCollectionExtensions
 
             client.BaseAddress = ParseBaseAddress(options.BaseUrl, ClaudeVisionOptions.SectionName);
             client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+            client.MaxResponseContentBufferSize = 1024 * 1024;
             client.DefaultRequestHeaders.TryAddWithoutValidation("x-api-key", options.ApiKey);
             client.DefaultRequestHeaders.TryAddWithoutValidation("anthropic-version", AnthropicVersion);
-        });
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
     }
 
     private static void AddOpenAIVisionBookReader(IServiceCollection services, IConfiguration configuration)
@@ -217,9 +219,10 @@ public static class BookshelfReaderServiceCollectionExtensions
 
             client.BaseAddress = ParseBaseAddress(options.BaseUrl, OpenAIVisionOptions.SectionName);
             client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+            client.MaxResponseContentBufferSize = 1024 * 1024;
             client.DefaultRequestHeaders.Authorization =
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", options.ApiKey);
-        });
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
     }
 
     private static void AddGeminiVisionBookReader(IServiceCollection services, IConfiguration configuration)
@@ -249,8 +252,9 @@ public static class BookshelfReaderServiceCollectionExtensions
 
             client.BaseAddress = ParseBaseAddress(options.BaseUrl, GeminiVisionOptions.SectionName);
             client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+            client.MaxResponseContentBufferSize = 1024 * 1024;
             client.DefaultRequestHeaders.TryAddWithoutValidation("x-goog-api-key", options.ApiKey);
-        });
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
     }
 
     private static bool IsAbsoluteHttps(string url)

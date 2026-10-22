@@ -39,6 +39,15 @@ public static class BookshelfReaderWebApplicationBuilderExtensions
     {
         ArgumentNullException.ThrowIfNull(app);
 
+        app.Use(SetSecurityHeadersAsync);
+
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseHsts();
+        }
+
+        app.UseHttpsRedirection();
+
         app.UseExceptionHandler();
         app.UseStatusCodePages();
 
@@ -49,15 +58,6 @@ public static class BookshelfReaderWebApplicationBuilderExtensions
         {
             app.UseRateLimiter();
         }
-
-        if (!app.Environment.IsDevelopment())
-        {
-            app.UseHsts();
-        }
-
-        app.UseHttpsRedirection();
-
-        app.Use(SetSecurityHeadersAsync);
 
         app.MapBookshelfReaderApi();
 

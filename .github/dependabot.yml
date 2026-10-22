@@ -1,0 +1,17 @@
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      dotnet-testing:
+        patterns:
+          - Microsoft.NET.Test.Sdk
+          - Microsoft.AspNetCore.TestHost
+          - xunit*
+          - coverlet.collector
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

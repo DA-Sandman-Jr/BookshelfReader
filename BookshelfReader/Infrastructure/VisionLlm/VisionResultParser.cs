@@ -19,7 +19,7 @@ internal static partial class VisionResultParser
     /// <paramref name="wasTruncated"/> is true (the model stopped at its token
     /// limit), a note is added so callers know some books may be missing.
     /// </summary>
-    public static VisionReadResult Parse(string? booksJson, bool wasTruncated, ILogger logger, int maxTokens)
+    public static VisionReadResult Parse(string? booksJson, bool wasTruncated, ILogger logger, int maxTokens, string model)
     {
         ArgumentNullException.ThrowIfNull(logger);
 
@@ -39,7 +39,7 @@ internal static partial class VisionResultParser
             LogStructuredOutputParseFailed(logger, ex);
         }
 
-        var result = new VisionReadResult();
+        var result = new VisionReadResult { Model = model };
 
         if (payload is not null)
         {

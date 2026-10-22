@@ -10,11 +10,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace BookshelfReader.Api.Endpoints;
 
-public static class BookshelfReaderEndpointRouteBuilderExtensions
+public static partial class BookshelfReaderEndpointRouteBuilderExtensions
 {
     private const string ApiBasePath = "/api";
     private const string BooksTag = "Books";
@@ -34,11 +35,13 @@ public static class BookshelfReaderEndpointRouteBuilderExtensions
         ApiKeyAuthenticationOptions apiKeyOptions = app.ServiceProvider.GetRequiredService<IOptions<ApiKeyAuthenticationOptions>>().Value;
 
         RouteHandlerBuilder parseEndpoint = apiGroup.MapPost("/bookshelf/parse", ParseAsync)
+            .WithFormOptions(valueCountLimit: 1, valueLengthLimit: 1024)
             .Accepts<IFormFile>("multipart/form-data")
             .WithName("ParseBookshelf")
             .WithTags(BookshelfTag)
             .Produces<ParseResult>(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status502BadGateway)
             .ProducesValidationProblem();
 
         if (apiKeyOptions.RequireApiKey)
@@ -84,10 +87,11 @@ public static class BookshelfReaderEndpointRouteBuilderExtensions
         return TypedResults.Ok(result.Books);
     }
 
-    private static async Task<Results<Ok<ParseResult>, ValidationProblem>> ParseAsync(
+    private static async Task<Results<Ok<ParseResult>, ValidationProblem, ProblemHttpResult>> ParseAsync(
         HttpRequest request,
         IBookshelfProcessingService processor,
         IImageUploadRequestHandler uploadRequestHandler,
+        ILoggerFactory loggerFactory,
         CancellationToken cancellationToken)
     {
         UploadProcessingResult preparationResult = await uploadRequestHandler.PrepareAsync(request, cancellationToken)
@@ -105,11 +109,22 @@ public static class BookshelfReaderEndpointRouteBuilderExtensions
             ParseResult result = await processor.ProcessAsync(imageStream, cancellationToken).ConfigureAwait(false);
             return TypedResults.Ok(result);
         }
-        catch (InvalidOperationException ex)
+        catch (VisionBookReaderException ex)
         {
-            return CreateValidationProblem("image", ex.Message);
+            LogVisionFailure(loggerFactory.CreateLogger("BookshelfReader.Api"), ex);
+            return TypedResults.Problem(
+                title: "Vision service unavailable",
+                detail: "The vision service could not process the image. Please try again later.",
+                statusCode: StatusCodes.Status502BadGateway);
+        }
+        catch (InvalidOperationException)
+        {
+            return CreateValidationProblem("image", "Unable to decode or process the uploaded image.");
         }
     }
+
+    [LoggerMessage(EventId = 1, Level = LogLevel.Error, Message = "The vision provider could not process the image.")]
+    private static partial void LogVisionFailure(ILogger logger, Exception exception);
 
     private static ValidationProblem CreateValidationProblem(string key, string message)
     {

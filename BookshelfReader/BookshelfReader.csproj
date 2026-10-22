@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>true</IsPackable>
     <PackageId>BookshelfReader</PackageId>
     <RootNamespace>BookshelfReader</RootNamespace>
     <B44Deterministic>true</B44Deterministic>
-    <Description>Dependency-injection helpers and API endpoint mappings for a bookshelf image parsing pipeline: upload validation, pluggable vision-powered book reading (Claude by default, or OpenAI or Gemini - bring your own key), genre classification, and Open Library lookup with in-pipeline metadata enrichment. Call AddBookshelfReader() and AddBookshelfReaderApi() to wire the pipeline into an ASP.NET Core app, plus optional API-key auth (AddBookshelfReaderApiKey()) and parse rate limiting (AddBookshelfReaderRateLimiting()). Pulls in a Windows-only native dependency (OpenCvSharp4.Windows) for image preprocessing.</Description>
+    <Description>Dependency-injection helpers and API endpoint mappings for a bookshelf image parsing pipeline: upload validation, pluggable vision-powered book reading (Claude by default, or OpenAI or Gemini - bring your own key), genre classification, and Open Library lookup with in-pipeline metadata enrichment. Call AddBookshelfReader() and AddBookshelfReaderApi() to wire the pipeline into an ASP.NET Core app, plus optional API-key auth (AddBookshelfReaderApiKey()) and parse rate limiting (AddBookshelfReaderRateLimiting()). Requires .NET 10 and includes the Windows-only native dependency OpenCvSharp4.runtime.win for image preprocessing.</Description>
   </PropertyGroup>
   <ItemGroup>
     <None Include="..\README.md" Pack="true" PackagePath="\" Link="README.md" />
@@ -20,11 +20,9 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="OpenCvSharp4.Windows" Version="4.10.0.20240616" />
+    <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260627" />
+    <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.13.0.20260627" />
     <PackageReference Include="FuzzySharp" Version="2.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+    <PackageReference Include="MetadataExtractor" Version="2.9.3" />
   </ItemGroup>
 </Project>
