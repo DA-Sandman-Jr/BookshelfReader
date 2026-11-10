@@ -35,7 +35,7 @@ public class BookshelfProcessingServiceTests
         Assert.Equal(0.95, result.Books[0].Confidence);
         Assert.Equal("Dune — Frank Herbert", result.Books[0].RawText);
         Assert.True(result.Books[0].BoundingBox.IsEmpty);
-        Assert.Single(result.Books[0].Notes, note => note.Contains("claude-haiku-4-5"));
+        Assert.Single(result.Books[0].Notes, note => note.Contains("claude-haiku-4-5", StringComparison.Ordinal));
 
         Assert.Equal("Foundation", result.Books[1].Title);
         Assert.Empty(result.Books[1].Author);
@@ -61,7 +61,7 @@ public class BookshelfProcessingServiceTests
         ParseResult result = await service.ProcessAsync(stream);
 
         Assert.Contains("Read by vision model selected-provider-model", result.Books[0].Notes, StringComparer.Ordinal);
-        Assert.DoesNotContain(result.Books[0].Notes, note => note.Contains("claude-haiku"));
+        Assert.DoesNotContain(result.Books[0].Notes, note => note.Contains("claude-haiku", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -92,7 +92,7 @@ public class BookshelfProcessingServiceTests
         using var stream = new MemoryStream();
         ParseResult result = await service.ProcessAsync(stream);
 
-        Assert.Single(result.Diagnostics.Notes, note => note.Contains("truncated"));
+        Assert.Single(result.Diagnostics.Notes, note => note.Contains("truncated", StringComparison.Ordinal));
     }
 
     private static BookshelfProcessingService CreateService(

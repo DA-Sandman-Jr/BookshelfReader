@@ -67,7 +67,7 @@ public class ApiSecurityRegressionTests
 
         Assert.Equal(HttpStatusCode.BadGateway, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType!.MediaType);
-        Assert.DoesNotContain("upstream-secret", await response.Content.ReadAsStringAsync(app.Lifetime.ApplicationStopping));
+        Assert.DoesNotContain("upstream-secret", await response.Content.ReadAsStringAsync(app.Lifetime.ApplicationStopping), StringComparison.Ordinal);
         Assert.Contains("no-store", response.Headers.GetValues("Cache-Control"), StringComparer.Ordinal);
     }
 

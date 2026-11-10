@@ -112,7 +112,7 @@ public class ClaudeVisionBookReaderTests
         VisionReadResult result = await reader.ReadAsync(TestImageBytes);
 
         Assert.Empty(result.Books);
-        Assert.Single(result.Notes, note => note.Contains("could not be parsed"));
+        Assert.Single(result.Notes, note => note.Contains("could not be parsed", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -134,7 +134,7 @@ public class ClaudeVisionBookReaderTests
         VisionReadResult result = await reader.ReadAsync(TestImageBytes);
 
         Assert.Single(result.Books);
-        Assert.Single(result.Notes, note => note.Contains("truncated"));
+        Assert.Single(result.Notes, note => note.Contains("truncated", StringComparison.Ordinal));
     }
 
     [Fact]

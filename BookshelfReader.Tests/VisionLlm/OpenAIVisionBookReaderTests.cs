@@ -87,7 +87,7 @@ public class OpenAIVisionBookReaderTests
 
         JsonElement imageBlock = message.GetProperty("content")[1];
         Assert.Equal("image_url", imageBlock.GetProperty("type").GetString());
-        Assert.StartsWith("data:image/jpeg;base64,", imageBlock.GetProperty("image_url").GetProperty("url").GetString());
+        Assert.StartsWith("data:image/jpeg;base64,", imageBlock.GetProperty("image_url").GetProperty("url").GetString(), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -164,7 +164,7 @@ public class OpenAIVisionBookReaderTests
         VisionReadResult result = await reader.ReadAsync(TestImageBytes);
 
         Assert.Single(result.Books);
-        Assert.Single(result.Notes, note => note.Contains("truncated"));
+        Assert.Single(result.Notes, note => note.Contains("truncated", StringComparison.Ordinal));
     }
 
     [Fact]

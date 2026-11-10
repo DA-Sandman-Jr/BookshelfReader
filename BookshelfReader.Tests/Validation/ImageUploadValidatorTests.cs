@@ -190,7 +190,7 @@ public class ImageUploadValidatorTests
             .ValidateImageUploadAsync(context.Request, CancellationToken.None);
 
         Assert.False(result.IsSuccess);
-        Assert.Contains(result.Problem!.ProblemDetails.Errors["image"], message => message.Contains("request limit"));
+        Assert.Contains(result.Problem!.ProblemDetails.Errors["image"], message => message.Contains("request limit", StringComparison.Ordinal));
         Assert.True(stream.Position < stream.Length);
         await context.Response.CompleteAsync();
     }
