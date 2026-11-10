@@ -1,17 +1,14 @@
 using BookshelfReader.Core.Options;
-using FluentAssertions;
 using Xunit;
 
 namespace BookshelfReader.Tests.Options;
 
 public class UploadsOptionsTests
 {
-    private static readonly string[] JpegContentTypes = { "image/jpeg" };
-
     [Fact]
     public void IsSupportedContentType_ReturnsFalse_ForUnsupportedImage()
     {
-        UploadsOptions.IsSupportedContentType("image/gif").Should().BeFalse();
+        Assert.False(UploadsOptions.IsSupportedContentType("image/gif"));
     }
 
     [Theory]
@@ -20,8 +17,8 @@ public class UploadsOptionsTests
     [InlineData("   ")]
     public void TryGetCanonicalContentType_ReturnsFalse_ForMissingValues(string? input)
     {
-        UploadContentTypeHelper.TryGetCanonicalContentType(input, out string? canonical).Should().BeFalse();
-        canonical.Should().BeEmpty();
+        Assert.False(UploadContentTypeHelper.TryGetCanonicalContentType(input, out string? canonical));
+        Assert.Empty(canonical);
     }
 
     [Theory]
@@ -30,7 +27,7 @@ public class UploadsOptionsTests
     [InlineData("image/pjpeg")]
     public void IsSupportedContentType_AcceptsCommonJpegAliases(string alias)
     {
-        UploadsOptions.IsSupportedContentType(alias).Should().BeTrue();
+        Assert.True(UploadsOptions.IsSupportedContentType(alias));
     }
 
     [Fact]
@@ -45,7 +42,7 @@ public class UploadsOptionsTests
             }
         };
 
-        options.AllowedContentTypes.Should().BeEquivalentTo(JpegContentTypes);
+        Assert.Equal("image/jpeg", Assert.Single(options.AllowedContentTypes));
     }
 
     [Fact]
@@ -60,15 +57,15 @@ public class UploadsOptionsTests
             }
         };
 
-        options.AllowedContentTypes.Should().BeEquivalentTo(JpegContentTypes);
+        Assert.Equal("image/jpeg", Assert.Single(options.AllowedContentTypes));
     }
 
     [Fact]
     public void TryGetImageSignature_ReturnsSameSignature_ForAliases()
     {
-        UploadContentTypeHelper.TryGetImageSignature("image/jpg", out ReadOnlyMemory<byte> aliasSignature).Should().BeTrue();
-        UploadContentTypeHelper.TryGetImageSignature("image/jpeg", out ReadOnlyMemory<byte> canonicalSignature).Should().BeTrue();
+        Assert.True(UploadContentTypeHelper.TryGetImageSignature("image/jpg", out ReadOnlyMemory<byte> aliasSignature));
+        Assert.True(UploadContentTypeHelper.TryGetImageSignature("image/jpeg", out ReadOnlyMemory<byte> canonicalSignature));
 
-        aliasSignature.ToArray().Should().Equal(canonicalSignature.ToArray());
+        Assert.Equal(canonicalSignature.ToArray(), aliasSignature.ToArray());
     }
 }

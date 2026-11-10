@@ -5,7 +5,6 @@ using BookshelfReader.Core.Abstractions;
 using BookshelfReader.Core.Models;
 using BookshelfReader.Core.Options;
 using BookshelfReader.Infrastructure.VisionLlm;
-using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using OpenCvSharp;
 using RichardSzalay.MockHttp;
@@ -45,10 +44,10 @@ public class GeminiVisionBookReaderTests
 
         VisionReadResult result = await reader.ReadAsync(TestImageBytes);
 
-        result.Books.Should().HaveCount(2);
-        result.Books[0].Should().Be(new VisionBookEntry("Dune", "Frank Herbert", 0.95));
-        result.Books[1].Should().Be(new VisionBookEntry("Foundation", string.Empty, 0.6));
-        result.Notes.Should().BeEmpty();
+        Assert.Equal(2, result.Books.Count);
+        Assert.Equal(new VisionBookEntry("Dune", "Frank Herbert", 0.95), result.Books[0]);
+        Assert.Equal(new VisionBookEntry("Foundation", string.Empty, 0.6), result.Books[1]);
+        Assert.Empty(result.Notes);
     }
 
     [Fact]
@@ -77,23 +76,23 @@ public class GeminiVisionBookReaderTests
 
         await reader.ReadAsync(TestImageBytes);
 
-        apiKeyHeader.Should().Be("test-api-key");
+        Assert.Equal("test-api-key", apiKeyHeader);
 
-        capturedBody.Should().NotBeNull();
-        using var document = JsonDocument.Parse(capturedBody!);
+        Assert.NotNull(capturedBody);
+        using var document = JsonDocument.Parse(capturedBody);
         JsonElement root = document.RootElement;
 
         JsonElement part0 = root.GetProperty("contents")[0].GetProperty("parts")[0];
-        part0.GetProperty("text").GetString().Should().NotBeNullOrEmpty();
+        Assert.False(string.IsNullOrEmpty(part0.GetProperty("text").GetString()));
 
         JsonElement part1 = root.GetProperty("contents")[0].GetProperty("parts")[1];
         JsonElement inlineData = part1.GetProperty("inline_data");
-        inlineData.GetProperty("mime_type").GetString().Should().Be("image/jpeg");
-        inlineData.GetProperty("data").GetString().Should().NotBeNullOrEmpty();
+        Assert.Equal("image/jpeg", inlineData.GetProperty("mime_type").GetString());
+        Assert.False(string.IsNullOrEmpty(inlineData.GetProperty("data").GetString()));
 
         JsonElement generationConfig = root.GetProperty("generationConfig");
-        generationConfig.GetProperty("responseMimeType").GetString().Should().Be("application/json");
-        generationConfig.GetProperty("maxOutputTokens").GetInt32().Should().Be(1234);
+        Assert.Equal("application/json", generationConfig.GetProperty("responseMimeType").GetString());
+        Assert.Equal(1234, generationConfig.GetProperty("maxOutputTokens").GetInt32());
     }
 
     [Fact]
@@ -111,7 +110,7 @@ public class GeminiVisionBookReaderTests
 
         VisionReadResult result = await reader.ReadAsync(TestImageBytes);
 
-        result.Books.Should().BeEmpty();
+        Assert.Empty(result.Books);
     }
 
     [Fact]
@@ -135,8 +134,8 @@ public class GeminiVisionBookReaderTests
 
         VisionReadResult result = await reader.ReadAsync(TestImageBytes);
 
-        result.Books.Should().ContainSingle();
-        result.Notes.Should().ContainSingle(note => note.Contains("truncated"));
+        Assert.Single(result.Books);
+        Assert.Single(result.Notes, note => note.Contains("truncated"));
     }
 
     [Fact]
@@ -151,8 +150,8 @@ public class GeminiVisionBookReaderTests
 
         VisionReadResult result = await reader.ReadAsync(TestImageBytes);
 
-        result.Books.Should().BeEmpty();
-        result.Notes.Should().ContainSingle(note => note.Contains("could not be parsed"));
+        Assert.Empty(result.Books);
+        Assert.Single(result.Notes, note => note.Contains("could not be parsed"));
     }
 
     [Fact]
@@ -168,8 +167,8 @@ public class GeminiVisionBookReaderTests
 
         Func<Task> act = () => reader.ReadAsync(TestImageBytes);
 
-        (await act.Should().ThrowAsync<VisionBookReaderException>())
-            .WithMessage("*rejected the configured API key (401)*API key not valid*");
+        VisionBookReaderException exception = await Assert.ThrowsAnyAsync<VisionBookReaderException>(act);
+        Assert.Matches(@"(?is)rejected the configured API key \(401\).*API key not valid", exception.Message);
     }
 
     [Fact]
@@ -183,8 +182,8 @@ public class GeminiVisionBookReaderTests
 
         Func<Task> act = () => reader.ReadAsync(TestImageBytes);
 
-        (await act.Should().ThrowAsync<VisionBookReaderException>())
-            .WithMessage("*server error (500)*");
+        VisionBookReaderException exception = await Assert.ThrowsAnyAsync<VisionBookReaderException>(act);
+        Assert.Contains("server error (500)", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     private static GeminiVisionBookReader CreateReader(MockHttpMessageHandler mockHttp, Action<GeminiVisionOptions>? configure = null)

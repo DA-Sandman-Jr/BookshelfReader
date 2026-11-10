@@ -2,7 +2,6 @@ using BookshelfReader.Core.Abstractions;
 using BookshelfReader.Core.Models;
 using BookshelfReader.Core.Options;
 using BookshelfReader.Infrastructure.Enrichment;
-using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -24,9 +23,9 @@ public class BookEnrichmentServiceTests
         var candidate = new BookCandidate { Title = "The Hobbit" };
         await CreateService(lookup).EnrichAsync(new[] { candidate });
 
-        candidate.Metadata.Should().NotBeNull();
-        candidate.Metadata!.Title.Should().Be("The Hobbit");
-        candidate.Notes.Should().ContainSingle(note => note.StartsWith("Catalog match score"));
+        Assert.NotNull(candidate.Metadata);
+        Assert.Equal("The Hobbit", candidate.Metadata.Title);
+        Assert.Single(candidate.Notes, note => note.StartsWith("Catalog match score", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -41,8 +40,8 @@ public class BookEnrichmentServiceTests
         var candidate = new BookCandidate { Title = "Dune", Author = "Frank Herbert" };
         await CreateService(lookup).EnrichAsync(new[] { candidate });
 
-        candidate.Metadata.Should().NotBeNull();
-        candidate.Metadata!.Author.Should().Be("Frank Herbert");
+        Assert.NotNull(candidate.Metadata);
+        Assert.Equal("Frank Herbert", candidate.Metadata.Author);
     }
 
     [Fact]
@@ -59,9 +58,9 @@ public class BookEnrichmentServiceTests
         var candidate = new BookCandidate { Title = "Dune Frank Herbert" };
         await CreateService(lookup).EnrichAsync(new[] { candidate });
 
-        candidate.Metadata.Should().NotBeNull();
-        candidate.Metadata!.Title.Should().Be("Dune");
-        candidate.Metadata.Author.Should().Be("Frank Herbert");
+        Assert.NotNull(candidate.Metadata);
+        Assert.Equal("Dune", candidate.Metadata.Title);
+        Assert.Equal("Frank Herbert", candidate.Metadata.Author);
     }
 
     [Fact]
@@ -75,8 +74,8 @@ public class BookEnrichmentServiceTests
         var candidate = new BookCandidate { Title = "Zzgh Blorp Vex" };
         await CreateService(lookup).EnrichAsync(new[] { candidate });
 
-        candidate.Metadata.Should().BeNull();
-        candidate.Notes.Should().ContainSingle(note => note.StartsWith("No confident catalog match"));
+        Assert.Null(candidate.Metadata);
+        Assert.Single(candidate.Notes, note => note.StartsWith("No confident catalog match", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -94,8 +93,8 @@ public class BookEnrichmentServiceTests
         var candidate = new BookCandidate { Title = "Dune" };
         await CreateService(lookup).EnrichAsync(new[] { candidate });
 
-        candidate.Genres.Should().Contain("Science Fiction");
-        candidate.Genres.Should().NotContain("Fiction");
+        Assert.Contains("Science Fiction", candidate.Genres, StringComparer.Ordinal);
+        Assert.DoesNotContain("Fiction", candidate.Genres, StringComparer.Ordinal);
     }
 
     [Fact]
@@ -115,7 +114,7 @@ public class BookEnrichmentServiceTests
         var candidate = new BookCandidate { Title = "Foundation" };
         await CreateService(lookup).EnrichAsync(new[] { candidate });
 
-        candidate.Genres.Should().Equal("Science Fiction");
+        Assert.Equal("Science Fiction", Assert.Single(candidate.Genres));
     }
 
     [Fact]
@@ -126,9 +125,9 @@ public class BookEnrichmentServiceTests
 
         await CreateService(lookup, new EnrichmentOptions { Enabled = false }).EnrichAsync(new[] { candidate });
 
-        lookup.CallCount.Should().Be(0);
-        candidate.Metadata.Should().BeNull();
-        candidate.Notes.Should().BeEmpty();
+        Assert.Equal(0, lookup.CallCount);
+        Assert.Null(candidate.Metadata);
+        Assert.Empty(candidate.Notes);
     }
 
     [Fact]
@@ -139,7 +138,7 @@ public class BookEnrichmentServiceTests
 
         await CreateService(lookup).EnrichAsync(new[] { candidate });
 
-        lookup.CallCount.Should().Be(0);
+        Assert.Equal(0, lookup.CallCount);
     }
 
     [Fact]
@@ -150,8 +149,8 @@ public class BookEnrichmentServiceTests
 
         await CreateService(lookup).EnrichAsync(new[] { candidate });
 
-        candidate.Metadata.Should().BeNull();
-        candidate.Notes.Should().ContainSingle(note => note == "Catalog lookup unavailable");
+        Assert.Null(candidate.Metadata);
+        Assert.Single(candidate.Notes, note => note == "Catalog lookup unavailable");
     }
 
     [Fact]
@@ -166,10 +165,10 @@ public class BookEnrichmentServiceTests
 
         await CreateService(lookup).EnrichAsync(candidates);
 
-        candidates.Should().AllSatisfy(candidate =>
+        Assert.All(candidates, candidate =>
         {
-            candidate.Metadata.Should().BeNull();
-            candidate.Notes.Should().ContainSingle(note => note == "Catalog lookup failed");
+            Assert.Null(candidate.Metadata);
+            Assert.Single(candidate.Notes, note => note == "Catalog lookup failed");
         });
     }
 
@@ -186,8 +185,8 @@ public class BookEnrichmentServiceTests
 
         await CreateService(lookup, new EnrichmentOptions { MaxConcurrentLookups = 2 }).EnrichAsync(candidates);
 
-        lookup.CallCount.Should().Be(8);
-        lookup.MaxObservedConcurrency.Should().BeLessThanOrEqualTo(2);
+        Assert.Equal(8, lookup.CallCount);
+        Assert.True(lookup.MaxObservedConcurrency <= 2);
     }
 
     private static BookEnrichmentService CreateService(IBookLookupService lookup, EnrichmentOptions? options = null)

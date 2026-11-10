@@ -5,7 +5,6 @@ using BookshelfReader.Core.Abstractions;
 using BookshelfReader.Core.Models;
 using BookshelfReader.Core.Options;
 using BookshelfReader.Infrastructure.VisionLlm;
-using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using OpenCvSharp;
 using RichardSzalay.MockHttp;
@@ -39,10 +38,10 @@ public class OpenAIVisionBookReaderTests
 
         VisionReadResult result = await reader.ReadAsync(TestImageBytes);
 
-        result.Books.Should().HaveCount(2);
-        result.Books[0].Should().Be(new VisionBookEntry("Dune", "Frank Herbert", 0.95));
-        result.Books[1].Should().Be(new VisionBookEntry("Foundation", string.Empty, 0.6));
-        result.Notes.Should().BeEmpty();
+        Assert.Equal(2, result.Books.Count);
+        Assert.Equal(new VisionBookEntry("Dune", "Frank Herbert", 0.95), result.Books[0]);
+        Assert.Equal(new VisionBookEntry("Foundation", string.Empty, 0.6), result.Books[1]);
+        Assert.Empty(result.Notes);
     }
 
     [Fact]
@@ -71,25 +70,24 @@ public class OpenAIVisionBookReaderTests
 
         await reader.ReadAsync(TestImageBytes);
 
-        capturedBody.Should().NotBeNull();
-        using var document = JsonDocument.Parse(capturedBody!);
+        Assert.NotNull(capturedBody);
+        using var document = JsonDocument.Parse(capturedBody);
         JsonElement root = document.RootElement;
 
-        root.GetProperty("model").GetString().Should().Be("gpt-4o-mini");
-        root.GetProperty("max_tokens").GetInt32().Should().Be(1234);
-        root.GetProperty("response_format").GetProperty("type").GetString().Should().Be("json_object");
+        Assert.Equal("gpt-4o-mini", root.GetProperty("model").GetString());
+        Assert.Equal(1234, root.GetProperty("max_tokens").GetInt32());
+        Assert.Equal("json_object", root.GetProperty("response_format").GetProperty("type").GetString());
 
         JsonElement message = root.GetProperty("messages")[0];
-        message.GetProperty("role").GetString().Should().Be("user");
+        Assert.Equal("user", message.GetProperty("role").GetString());
 
         JsonElement textBlock = message.GetProperty("content")[0];
-        textBlock.GetProperty("type").GetString().Should().Be("text");
-        textBlock.GetProperty("text").GetString().Should().NotBeNullOrEmpty();
+        Assert.Equal("text", textBlock.GetProperty("type").GetString());
+        Assert.False(string.IsNullOrEmpty(textBlock.GetProperty("text").GetString()));
 
         JsonElement imageBlock = message.GetProperty("content")[1];
-        imageBlock.GetProperty("type").GetString().Should().Be("image_url");
-        imageBlock.GetProperty("image_url").GetProperty("url").GetString()
-            .Should().StartWith("data:image/jpeg;base64,");
+        Assert.Equal("image_url", imageBlock.GetProperty("type").GetString());
+        Assert.StartsWith("data:image/jpeg;base64,", imageBlock.GetProperty("image_url").GetProperty("url").GetString());
     }
 
     [Fact]
@@ -122,7 +120,7 @@ public class OpenAIVisionBookReaderTests
 
         await reader.ReadAsync(TestImageBytes);
 
-        authHeader.Should().Be("Bearer test-api-key");
+        Assert.Equal("Bearer test-api-key", authHeader);
     }
 
     [Fact]
@@ -143,8 +141,8 @@ public class OpenAIVisionBookReaderTests
 
         VisionReadResult result = await reader.ReadAsync(TestImageBytes);
 
-        result.Books.Should().ContainSingle();
-        result.Books[0].Title.Should().Be("Dune");
+        Assert.Single(result.Books);
+        Assert.Equal("Dune", result.Books[0].Title);
     }
 
     [Fact]
@@ -165,8 +163,8 @@ public class OpenAIVisionBookReaderTests
 
         VisionReadResult result = await reader.ReadAsync(TestImageBytes);
 
-        result.Books.Should().ContainSingle();
-        result.Notes.Should().ContainSingle(note => note.Contains("truncated"));
+        Assert.Single(result.Books);
+        Assert.Single(result.Notes, note => note.Contains("truncated"));
     }
 
     [Fact]
@@ -182,8 +180,8 @@ public class OpenAIVisionBookReaderTests
 
         Func<Task> act = () => reader.ReadAsync(TestImageBytes);
 
-        (await act.Should().ThrowAsync<VisionBookReaderException>())
-            .WithMessage("*rejected the configured API key (401)*invalid api key*");
+        VisionBookReaderException exception = await Assert.ThrowsAnyAsync<VisionBookReaderException>(act);
+        Assert.Matches(@"(?is)rejected the configured API key \(401\).*invalid api key", exception.Message);
     }
 
     [Fact]
@@ -199,8 +197,8 @@ public class OpenAIVisionBookReaderTests
 
         Func<Task> act = () => reader.ReadAsync(TestImageBytes);
 
-        (await act.Should().ThrowAsync<VisionBookReaderException>())
-            .WithMessage("*rate limiting requests (429)*rate limited*");
+        VisionBookReaderException exception = await Assert.ThrowsAnyAsync<VisionBookReaderException>(act);
+        Assert.Matches(@"(?is)rate limiting requests \(429\).*rate limited", exception.Message);
     }
 
     [Fact]
@@ -214,8 +212,8 @@ public class OpenAIVisionBookReaderTests
 
         Func<Task> act = () => reader.ReadAsync(TestImageBytes);
 
-        (await act.Should().ThrowAsync<VisionBookReaderException>())
-            .WithMessage("*server error (500)*");
+        VisionBookReaderException exception = await Assert.ThrowsAnyAsync<VisionBookReaderException>(act);
+        Assert.Contains("server error (500)", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     private static OpenAIVisionBookReader CreateReader(MockHttpMessageHandler mockHttp, Action<OpenAIVisionOptions>? configure = null)
