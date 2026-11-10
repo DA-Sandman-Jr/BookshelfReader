@@ -5,7 +5,6 @@ using BookshelfReader.Core.Abstractions;
 using BookshelfReader.Core.Models;
 using BookshelfReader.Core.Options;
 using BookshelfReader.Infrastructure.VisionLlm;
-using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using OpenCvSharp;
 using RichardSzalay.MockHttp;
@@ -37,10 +36,10 @@ public class ClaudeVisionBookReaderTests
 
         VisionReadResult result = await reader.ReadAsync(TestImageBytes);
 
-        result.Books.Should().HaveCount(2);
-        result.Books[0].Should().Be(new VisionBookEntry("Dune", "Frank Herbert", 0.95));
-        result.Books[1].Should().Be(new VisionBookEntry("Foundation", string.Empty, 0.6));
-        result.Notes.Should().BeEmpty();
+        Assert.Equal(2, result.Books.Count);
+        Assert.Equal(new VisionBookEntry("Dune", "Frank Herbert", 0.95), result.Books[0]);
+        Assert.Equal(new VisionBookEntry("Foundation", string.Empty, 0.6), result.Books[1]);
+        Assert.Empty(result.Notes);
     }
 
     [Fact]
@@ -69,29 +68,29 @@ public class ClaudeVisionBookReaderTests
 
         await reader.ReadAsync(TestImageBytes);
 
-        capturedBody.Should().NotBeNull();
-        using var document = JsonDocument.Parse(capturedBody!);
+        Assert.NotNull(capturedBody);
+        using var document = JsonDocument.Parse(capturedBody);
         JsonElement root = document.RootElement;
 
-        root.GetProperty("model").GetString().Should().Be("claude-haiku-4-5");
-        root.GetProperty("max_tokens").GetInt32().Should().Be(1234);
+        Assert.Equal("claude-haiku-4-5", root.GetProperty("model").GetString());
+        Assert.Equal(1234, root.GetProperty("max_tokens").GetInt32());
 
         JsonElement message = root.GetProperty("messages")[0];
-        message.GetProperty("role").GetString().Should().Be("user");
+        Assert.Equal("user", message.GetProperty("role").GetString());
 
         JsonElement imageBlock = message.GetProperty("content")[0];
-        imageBlock.GetProperty("type").GetString().Should().Be("image");
-        imageBlock.GetProperty("source").GetProperty("type").GetString().Should().Be("base64");
-        imageBlock.GetProperty("source").GetProperty("media_type").GetString().Should().Be("image/jpeg");
-        imageBlock.GetProperty("source").GetProperty("data").GetString().Should().NotBeNullOrEmpty();
+        Assert.Equal("image", imageBlock.GetProperty("type").GetString());
+        Assert.Equal("base64", imageBlock.GetProperty("source").GetProperty("type").GetString());
+        Assert.Equal("image/jpeg", imageBlock.GetProperty("source").GetProperty("media_type").GetString());
+        Assert.False(string.IsNullOrEmpty(imageBlock.GetProperty("source").GetProperty("data").GetString()));
 
         JsonElement textBlock = message.GetProperty("content")[1];
-        textBlock.GetProperty("type").GetString().Should().Be("text");
-        textBlock.GetProperty("text").GetString().Should().NotBeNullOrEmpty();
+        Assert.Equal("text", textBlock.GetProperty("type").GetString());
+        Assert.False(string.IsNullOrEmpty(textBlock.GetProperty("text").GetString()));
 
         JsonElement schema = root.GetProperty("output_config").GetProperty("format");
-        schema.GetProperty("type").GetString().Should().Be("json_schema");
-        schema.GetProperty("schema").GetProperty("required")[0].GetString().Should().Be("books");
+        Assert.Equal("json_schema", schema.GetProperty("type").GetString());
+        Assert.Equal("books", schema.GetProperty("schema").GetProperty("required")[0].GetString());
     }
 
     [Fact]
@@ -112,8 +111,8 @@ public class ClaudeVisionBookReaderTests
 
         VisionReadResult result = await reader.ReadAsync(TestImageBytes);
 
-        result.Books.Should().BeEmpty();
-        result.Notes.Should().ContainSingle(note => note.Contains("could not be parsed"));
+        Assert.Empty(result.Books);
+        Assert.Single(result.Notes, note => note.Contains("could not be parsed", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -134,8 +133,8 @@ public class ClaudeVisionBookReaderTests
 
         VisionReadResult result = await reader.ReadAsync(TestImageBytes);
 
-        result.Books.Should().ContainSingle();
-        result.Notes.Should().ContainSingle(note => note.Contains("truncated"));
+        Assert.Single(result.Books);
+        Assert.Single(result.Notes, note => note.Contains("truncated", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -151,8 +150,8 @@ public class ClaudeVisionBookReaderTests
 
         Func<Task> act = () => reader.ReadAsync(TestImageBytes);
 
-        (await act.Should().ThrowAsync<VisionBookReaderException>())
-            .WithMessage("*rejected the configured API key (401)*invalid x-api-key*");
+        VisionBookReaderException exception = await Assert.ThrowsAnyAsync<VisionBookReaderException>(act);
+        Assert.Matches(@"(?is)rejected the configured API key \(401\).*invalid x-api-key", exception.Message);
     }
 
     [Fact]
@@ -168,8 +167,8 @@ public class ClaudeVisionBookReaderTests
 
         Func<Task> act = () => reader.ReadAsync(TestImageBytes);
 
-        (await act.Should().ThrowAsync<VisionBookReaderException>())
-            .WithMessage("*rate limiting requests (429)*rate limited*");
+        VisionBookReaderException exception = await Assert.ThrowsAnyAsync<VisionBookReaderException>(act);
+        Assert.Matches(@"(?is)rate limiting requests \(429\).*rate limited", exception.Message);
     }
 
     [Fact]
@@ -183,8 +182,8 @@ public class ClaudeVisionBookReaderTests
 
         Func<Task> act = () => reader.ReadAsync(TestImageBytes);
 
-        (await act.Should().ThrowAsync<VisionBookReaderException>())
-            .WithMessage("*server error (500)*");
+        VisionBookReaderException exception = await Assert.ThrowsAnyAsync<VisionBookReaderException>(act);
+        Assert.Contains("server error (500)", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     private static ClaudeVisionBookReader CreateReader(MockHttpMessageHandler mockHttp, Action<ClaudeVisionOptions>? configure = null)

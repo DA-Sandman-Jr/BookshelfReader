@@ -3,7 +3,6 @@ using BookshelfReader.Core.Options;
 using BookshelfReader.Extensions;
 using BookshelfReader.Extensions.Authentication;
 using BookshelfReader.Infrastructure.VisionLlm;
-using FluentAssertions;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,14 +26,13 @@ public class BookshelfReaderServiceCollectionExtensionsTests
 
         var services = new ServiceCollection();
 
-        services.Invoking(s => s.AddBookshelfReader(configuration))
-            .Should().NotThrow();
+        services.AddBookshelfReader(configuration);
 
-        services.Should().Contain(descriptor => descriptor.ServiceType == typeof(IVisionBookReader));
-        services.Should().Contain(descriptor => descriptor.ServiceType == typeof(IBookshelfProcessingService));
-        services.Should().Contain(descriptor => descriptor.ServiceType == typeof(IBookLookupService));
-        services.Should().Contain(descriptor => descriptor.ServiceType == typeof(IBookEnrichmentService));
-        services.Should().Contain(descriptor => descriptor.ServiceType == typeof(IGenreClassifier));
+        Assert.Contains(services, descriptor => descriptor.ServiceType == typeof(IVisionBookReader));
+        Assert.Contains(services, descriptor => descriptor.ServiceType == typeof(IBookshelfProcessingService));
+        Assert.Contains(services, descriptor => descriptor.ServiceType == typeof(IBookLookupService));
+        Assert.Contains(services, descriptor => descriptor.ServiceType == typeof(IBookEnrichmentService));
+        Assert.Contains(services, descriptor => descriptor.ServiceType == typeof(IGenreClassifier));
     }
 
     [Fact]
@@ -52,8 +50,8 @@ public class BookshelfReaderServiceCollectionExtensionsTests
 
         Action act = () => provider.GetRequiredService<IOptions<BookshelfReader.Core.Options.EnrichmentOptions>>().Value.ToString();
 
-        act.Should().Throw<OptionsValidationException>()
-            .WithMessage("*Enrichment:MaxConcurrentLookups must be between 1 and 16.*");
+        OptionsValidationException exception = Assert.ThrowsAny<OptionsValidationException>(act);
+        Assert.Contains("Enrichment:MaxConcurrentLookups must be between 1 and 16.", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -72,8 +70,8 @@ public class BookshelfReaderServiceCollectionExtensionsTests
 
         Action act = () => provider.GetRequiredService<IOptions<BookshelfReader.Core.Options.UploadsOptions>>().Value.ToString();
 
-        act.Should().Throw<OptionsValidationException>()
-            .WithMessage("*Uploads:MaxBytes must be between 1 byte and 20 MB.*");
+        OptionsValidationException exception = Assert.ThrowsAny<OptionsValidationException>(act);
+        Assert.Contains("Uploads:MaxBytes must be between 1 byte and 20 MB.", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -92,8 +90,8 @@ public class BookshelfReaderServiceCollectionExtensionsTests
 
         Action act = () => provider.GetRequiredService<IOptions<ApiKeyAuthenticationOptions>>().Value.RequireApiKey.ToString();
 
-        act.Should().Throw<OptionsValidationException>()
-            .WithMessage("*At least one non-empty API key must be configured when API keys are required.*");
+        OptionsValidationException exception = Assert.ThrowsAny<OptionsValidationException>(act);
+        Assert.Contains("At least one non-empty API key must be configured when API keys are required.", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -112,8 +110,8 @@ public class BookshelfReaderServiceCollectionExtensionsTests
 
         FormOptions formOptions = provider.GetRequiredService<IOptions<FormOptions>>().Value;
 
-        formOptions.MultipartBodyLengthLimit.Should().Be(1048576);
-        formOptions.MemoryBufferThreshold.Should().Be(1048576);
+        Assert.Equal(1048576, formOptions.MultipartBodyLengthLimit);
+        Assert.Equal(1048576, formOptions.MemoryBufferThreshold);
     }
 
     [Fact]
@@ -131,8 +129,8 @@ public class BookshelfReaderServiceCollectionExtensionsTests
 
         Action act = () => provider.GetRequiredService<IBookLookupService>();
 
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("OpenLibrary:BaseUrl must use HTTPS.");
+        InvalidOperationException exception = Assert.ThrowsAny<InvalidOperationException>(act);
+        Assert.Equal("OpenLibrary:BaseUrl must use HTTPS.", exception.Message, ignoreCase: true);
     }
 
     [Fact]
@@ -151,8 +149,8 @@ public class BookshelfReaderServiceCollectionExtensionsTests
 
             Action act = () => provider.GetRequiredService<IOptions<ClaudeVisionOptions>>().Value.ToString();
 
-            act.Should().Throw<OptionsValidationException>()
-                .WithMessage("*ClaudeVision:ApiKey must be configured, or set the ANTHROPIC_API_KEY environment variable.*");
+            OptionsValidationException exception = Assert.ThrowsAny<OptionsValidationException>(act);
+            Assert.Contains("ClaudeVision:ApiKey must be configured, or set the ANTHROPIC_API_KEY environment variable.", exception.Message, StringComparison.OrdinalIgnoreCase);
         }
         finally
         {
@@ -176,7 +174,7 @@ public class BookshelfReaderServiceCollectionExtensionsTests
 
             ClaudeVisionOptions options = provider.GetRequiredService<IOptions<ClaudeVisionOptions>>().Value;
 
-            options.ApiKey.Should().Be("env-api-key");
+            Assert.Equal("env-api-key", options.ApiKey);
         }
         finally
         {
@@ -200,8 +198,8 @@ public class BookshelfReaderServiceCollectionExtensionsTests
 
         Action act = () => provider.GetRequiredService<IOptions<ClaudeVisionOptions>>().Value.ToString();
 
-        act.Should().Throw<OptionsValidationException>()
-            .WithMessage("*ClaudeVision:BaseUrl must be an absolute https URL.*");
+        OptionsValidationException exception = Assert.ThrowsAny<OptionsValidationException>(act);
+        Assert.Contains("ClaudeVision:BaseUrl must be an absolute https URL.", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -219,6 +217,6 @@ public class BookshelfReaderServiceCollectionExtensionsTests
 
         IVisionBookReader reader = provider.GetRequiredService<IVisionBookReader>();
 
-        reader.Should().BeOfType<ClaudeVisionBookReader>();
+        Assert.IsType<ClaudeVisionBookReader>(reader);
     }
 }

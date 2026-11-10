@@ -2,7 +2,6 @@ using System.Buffers.Binary;
 using System.Text;
 using BookshelfReader.Api.Validation;
 using BookshelfReader.Core.Options;
-using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using OpenCvSharp;
@@ -28,8 +27,8 @@ public class ImageUploadValidatorTests
 
         UploadValidationResult result = await validator.ValidateImageUploadAsync(context.Request, CancellationToken.None);
 
-        result.IsSuccess.Should().BeFalse();
-        result.Problem.Should().NotBeNull();
+        Assert.False(result.IsSuccess);
+        Assert.NotNull(result.Problem);
     }
 
     [Fact]
@@ -42,8 +41,8 @@ public class ImageUploadValidatorTests
 
         UploadValidationResult result = await validator.ValidateImageUploadAsync(context.Request, CancellationToken.None);
 
-        result.IsSuccess.Should().BeFalse();
-        result.Problem.Should().NotBeNull();
+        Assert.False(result.IsSuccess);
+        Assert.NotNull(result.Problem);
     }
 
     [Fact]
@@ -59,8 +58,8 @@ public class ImageUploadValidatorTests
 
         UploadValidationResult result = await validator.ValidateImageUploadAsync(context.Request, CancellationToken.None);
 
-        result.IsSuccess.Should().BeTrue();
-        result.CanonicalContentType.Should().Be("image/jpeg");
+        Assert.True(result.IsSuccess);
+        Assert.Equal("image/jpeg", result.CanonicalContentType);
     }
 
     [Fact]
@@ -71,8 +70,8 @@ public class ImageUploadValidatorTests
 
         ValidationProblem? result = await validator.ValidateImageSignatureAsync(stream, "image/png", CancellationToken.None);
 
-        result.Should().NotBeNull();
-        stream.Position.Should().Be(0);
+        Assert.NotNull(result);
+        Assert.Equal(0, stream.Position);
     }
 
     [Fact]
@@ -83,8 +82,8 @@ public class ImageUploadValidatorTests
 
         ValidationProblem? result = await validator.ValidateImageSignatureAsync(stream, "image/png", CancellationToken.None);
 
-        result.Should().BeNull();
-        stream.Position.Should().Be(0);
+        Assert.Null(result);
+        Assert.Equal(0, stream.Position);
     }
 
     [Fact]
@@ -96,8 +95,8 @@ public class ImageUploadValidatorTests
 
         ValidationProblem? result = validator.ValidateImageMetadata(stream);
 
-        result.Should().NotBeNull();
-        stream.Position.Should().Be(0);
+        Assert.NotNull(result);
+        Assert.Equal(0, stream.Position);
     }
 
     [Fact]
@@ -108,8 +107,8 @@ public class ImageUploadValidatorTests
 
         ValidationProblem? result = validator.ValidateImageMetadata(stream);
 
-        result.Should().NotBeNull();
-        stream.Position.Should().Be(0);
+        Assert.NotNull(result);
+        Assert.Equal(0, stream.Position);
     }
 
     [Theory]
@@ -123,8 +122,8 @@ public class ImageUploadValidatorTests
         ValidationProblem? result = CreateValidator(new UploadsOptions { MaxImagePixels = 12 })
             .ValidateImageMetadata(stream);
 
-        result.Should().BeNull();
-        stream.Position.Should().Be(0);
+        Assert.Null(result);
+        Assert.Equal(0, stream.Position);
     }
 
     [Theory]
@@ -138,8 +137,8 @@ public class ImageUploadValidatorTests
         BinaryPrimitives.WriteInt32BigEndian(bytes.AsSpan(20, 4), height);
         using var stream = new MemoryStream(bytes);
 
-        CreateValidator().ValidateImageMetadata(stream).Should().NotBeNull();
-        stream.Position.Should().Be(0);
+        Assert.NotNull(CreateValidator().ValidateImageMetadata(stream));
+        Assert.Equal(0, stream.Position);
     }
 
     [Fact]
@@ -149,7 +148,7 @@ public class ImageUploadValidatorTests
         BinaryPrimitives.WriteInt32BigEndian(bytes.AsSpan(8, 4), int.MaxValue);
         using var stream = new MemoryStream(bytes);
 
-        CreateValidator().ValidateImageMetadata(stream).Should().NotBeNull();
+        Assert.NotNull(CreateValidator().ValidateImageMetadata(stream));
     }
 
     [Fact]
@@ -160,8 +159,8 @@ public class ImageUploadValidatorTests
         ValidationProblem? result = await CreateValidator()
             .ValidateImageSignatureAsync(stream, "image/png", CancellationToken.None);
 
-        result.Should().BeNull();
-        stream.Position.Should().Be(0);
+        Assert.Null(result);
+        Assert.Equal(0, stream.Position);
     }
 
     private sealed class ShortReadStream(byte[] bytes) : MemoryStream(bytes)
@@ -190,9 +189,9 @@ public class ImageUploadValidatorTests
         UploadValidationResult result = await CreateValidator(new UploadsOptions { MaxBytes = 1024 })
             .ValidateImageUploadAsync(context.Request, CancellationToken.None);
 
-        result.IsSuccess.Should().BeFalse();
-        result.Problem!.ProblemDetails.Errors["image"].Should().Contain(message => message.Contains("request limit"));
-        stream.Position.Should().BeLessThan(stream.Length);
+        Assert.False(result.IsSuccess);
+        Assert.Contains(result.Problem!.ProblemDetails.Errors["image"], message => message.Contains("request limit", StringComparison.Ordinal));
+        Assert.True(stream.Position < stream.Length);
         await context.Response.CompleteAsync();
     }
 

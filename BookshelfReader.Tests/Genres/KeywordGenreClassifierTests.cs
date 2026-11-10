@@ -1,5 +1,4 @@
 using BookshelfReader.Infrastructure.Genres;
-using FluentAssertions;
 using Xunit;
 
 namespace BookshelfReader.Tests.Genres;
@@ -13,7 +12,7 @@ public class KeywordGenreClassifierTests
     {
         IReadOnlyList<string> result = _classifier.Classify("The Old Man and the Sea", "The Old Man and the Sea");
 
-        result.Should().BeEmpty();
+        Assert.Empty(result);
     }
 
     [Theory]
@@ -31,7 +30,7 @@ public class KeywordGenreClassifierTests
     {
         IReadOnlyList<string> result = _classifier.Classify(keyword, string.Empty);
 
-        result.Should().ContainSingle().Which.Should().Be(expectedGenre);
+        Assert.Equal(expectedGenre, Assert.Single(result));
     }
 
     [Fact]
@@ -39,7 +38,7 @@ public class KeywordGenreClassifierTests
     {
         IReadOnlyList<string> result = _classifier.Classify("DRAGON", string.Empty);
 
-        result.Should().ContainSingle().Which.Should().Be("Fantasy");
+        Assert.Equal("Fantasy", Assert.Single(result));
     }
 
     [Fact]
@@ -48,7 +47,7 @@ public class KeywordGenreClassifierTests
         // "love" inside "beloved" should not trigger Romance
         IReadOnlyList<string> result = _classifier.Classify("The Beloved", "beloved gloves loveable");
 
-        result.Should().BeEmpty();
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -56,7 +55,7 @@ public class KeywordGenreClassifierTests
     {
         IReadOnlyList<string> result = _classifier.Classify("A Dark Night", "The detective investigated the scene");
 
-        result.Should().ContainSingle().Which.Should().Be("Mystery");
+        Assert.Equal("Mystery", Assert.Single(result));
     }
 
     [Fact]
@@ -64,9 +63,9 @@ public class KeywordGenreClassifierTests
     {
         IReadOnlyList<string> result = _classifier.Classify("Love and Murder", string.Empty);
 
-        result.Should().HaveCount(2)
-            .And.Contain("Romance")
-            .And.Contain("Mystery");
+        Assert.Equal(2, result.Count);
+        Assert.Contains("Romance", result, StringComparer.Ordinal);
+        Assert.Contains("Mystery", result, StringComparer.Ordinal);
     }
 
     [Fact]
@@ -74,7 +73,7 @@ public class KeywordGenreClassifierTests
     {
         IReadOnlyList<string> result = _classifier.Classify(string.Empty, string.Empty);
 
-        result.Should().BeEmpty();
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -82,7 +81,7 @@ public class KeywordGenreClassifierTests
     {
         IReadOnlyList<string> result = _classifier.Classify("   ", "\t\n");
 
-        result.Should().BeEmpty();
+        Assert.Empty(result);
     }
 
     [Fact]
@@ -90,6 +89,6 @@ public class KeywordGenreClassifierTests
     {
         IReadOnlyList<string> result = _classifier.Classify("Dragon", "dragon Dragon DRAGON");
 
-        result.Should().ContainSingle().Which.Should().Be("Fantasy");
+        Assert.Equal("Fantasy", Assert.Single(result));
     }
 }

@@ -1,5 +1,4 @@
 using BookshelfReader.Infrastructure.Imaging;
-using FluentAssertions;
 using OpenCvSharp;
 using Xunit;
 
@@ -14,7 +13,7 @@ public class ImagePreprocessorTests
 
         byte[] output = ImagePreprocessor.Preprocess(input, maxImageDimension: 1568);
 
-        ContainsApp1Segment(output).Should().BeFalse();
+        Assert.False(ContainsApp1Segment(output));
     }
 
     [Fact]
@@ -27,8 +26,8 @@ public class ImagePreprocessorTests
         byte[] output = ImagePreprocessor.Preprocess(input, maxImageDimension: 1568);
 
         using Mat decoded = Cv2.ImDecode(output, ImreadModes.Color);
-        decoded.Width.Should().Be(10);
-        decoded.Height.Should().Be(20);
+        Assert.Equal(10, decoded.Width);
+        Assert.Equal(20, decoded.Height);
     }
 
     [Fact]
@@ -39,8 +38,8 @@ public class ImagePreprocessorTests
         byte[] output = ImagePreprocessor.Preprocess(input, maxImageDimension: 500);
 
         using Mat decoded = Cv2.ImDecode(output, ImreadModes.Color);
-        decoded.Width.Should().Be(500);
-        decoded.Height.Should().Be(250);
+        Assert.Equal(500, decoded.Width);
+        Assert.Equal(250, decoded.Height);
     }
 
     [Fact]
@@ -51,8 +50,8 @@ public class ImagePreprocessorTests
         byte[] output = ImagePreprocessor.Preprocess(input, maxImageDimension: 1568);
 
         using Mat decoded = Cv2.ImDecode(output, ImreadModes.Color);
-        decoded.Width.Should().Be(40);
-        decoded.Height.Should().Be(20);
+        Assert.Equal(40, decoded.Width);
+        Assert.Equal(20, decoded.Height);
     }
 
     [Fact]
@@ -62,8 +61,8 @@ public class ImagePreprocessorTests
 
         Action act = () => ImagePreprocessor.Preprocess(input, maxImageDimension: 1568);
 
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("Unable to decode the uploaded image.");
+        InvalidOperationException exception = Assert.ThrowsAny<InvalidOperationException>(act);
+        Assert.Equal("Unable to decode the uploaded image.", exception.Message, ignoreCase: true);
     }
 
     private static bool ContainsApp1Segment(byte[] jpegBytes)

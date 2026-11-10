@@ -3,7 +3,6 @@ using BookshelfReader.Core.Models;
 using BookshelfReader.Core.Options;
 using BookshelfReader.Infrastructure.Genres;
 using BookshelfReader.Infrastructure.Processing;
-using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
@@ -29,23 +28,23 @@ public class BookshelfProcessingServiceTests
         using var stream = new MemoryStream(new byte[] { 1, 2, 3 });
         ParseResult result = await service.ProcessAsync(stream);
 
-        result.Books.Should().HaveCount(2);
+        Assert.Equal(2, result.Books.Count);
 
-        result.Books[0].Title.Should().Be("Dune");
-        result.Books[0].Author.Should().Be("Frank Herbert");
-        result.Books[0].Confidence.Should().Be(0.95);
-        result.Books[0].RawText.Should().Be("Dune — Frank Herbert");
-        result.Books[0].BoundingBox.IsEmpty.Should().BeTrue();
-        result.Books[0].Notes.Should().ContainSingle(note => note.Contains("claude-haiku-4-5"));
+        Assert.Equal("Dune", result.Books[0].Title);
+        Assert.Equal("Frank Herbert", result.Books[0].Author);
+        Assert.Equal(0.95, result.Books[0].Confidence);
+        Assert.Equal("Dune — Frank Herbert", result.Books[0].RawText);
+        Assert.True(result.Books[0].BoundingBox.IsEmpty);
+        Assert.Single(result.Books[0].Notes, note => note.Contains("claude-haiku-4-5", StringComparison.Ordinal));
 
-        result.Books[1].Title.Should().Be("Foundation");
-        result.Books[1].Author.Should().BeEmpty();
-        result.Books[1].RawText.Should().Be("Foundation");
+        Assert.Equal("Foundation", result.Books[1].Title);
+        Assert.Empty(result.Books[1].Author);
+        Assert.Equal("Foundation", result.Books[1].RawText);
 
-        result.Diagnostics.SegmentCount.Should().Be(2);
+        Assert.Equal(2, result.Diagnostics.SegmentCount);
 
-        enrichmentService.Received.Should().NotBeNull();
-        enrichmentService.Received.Should().HaveCount(2);
+        Assert.NotNull(enrichmentService.Received);
+        Assert.Equal(2, enrichmentService.Received.Count);
     }
 
     [Fact]
@@ -61,8 +60,8 @@ public class BookshelfProcessingServiceTests
 
         ParseResult result = await service.ProcessAsync(stream);
 
-        result.Books[0].Notes.Should().Contain("Read by vision model selected-provider-model");
-        result.Books[0].Notes.Should().NotContain(note => note.Contains("claude-haiku"));
+        Assert.Contains("Read by vision model selected-provider-model", result.Books[0].Notes, StringComparer.Ordinal);
+        Assert.DoesNotContain(result.Books[0].Notes, note => note.Contains("claude-haiku", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -75,9 +74,9 @@ public class BookshelfProcessingServiceTests
         using var stream = new MemoryStream();
         ParseResult result = await service.ProcessAsync(stream);
 
-        result.Books.Should().BeEmpty();
-        result.Diagnostics.SegmentCount.Should().Be(0);
-        enrichmentService.Received.Should().BeNull();
+        Assert.Empty(result.Books);
+        Assert.Equal(0, result.Diagnostics.SegmentCount);
+        Assert.Null(enrichmentService.Received);
     }
 
     [Fact]
@@ -93,7 +92,7 @@ public class BookshelfProcessingServiceTests
         using var stream = new MemoryStream();
         ParseResult result = await service.ProcessAsync(stream);
 
-        result.Diagnostics.Notes.Should().ContainSingle(note => note.Contains("truncated"));
+        Assert.Single(result.Diagnostics.Notes, note => note.Contains("truncated", StringComparison.Ordinal));
     }
 
     private static BookshelfProcessingService CreateService(

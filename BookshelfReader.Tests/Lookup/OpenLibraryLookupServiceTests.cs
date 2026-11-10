@@ -2,7 +2,6 @@ using System.Text.Json;
 using BookshelfReader.Core.Models;
 using BookshelfReader.Core.Models.External;
 using BookshelfReader.Infrastructure.Lookup;
-using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using RichardSzalay.MockHttp;
 using Xunit;
@@ -37,15 +36,15 @@ public class OpenLibraryLookupServiceTests
         BookLookupResult result = await service.LookupAsync("Test");
         var books = result.Books.ToList();
 
-        result.ErrorMessage.Should().BeNull();
-        books.Should().HaveCount(2);
-        books[0].Title.Should().Be("Book A");
-        books[0].Author.Should().Be("Author A");
-        books[0].PublishYear.Should().Be(2020);
-        books[0].Isbn.Should().Be("123");
-        books[0].CoverUrl.Should().Be("https://covers.openlibrary.org/b/id/42-M.jpg");
-        books[0].Subjects.Should().Equal("Fantasy", "Fiction");
-        books[1].Subjects.Should().BeEmpty();
+        Assert.Null(result.ErrorMessage);
+        Assert.Equal(2, books.Count);
+        Assert.Equal("Book A", books[0].Title);
+        Assert.Equal("Author A", books[0].Author);
+        Assert.Equal(2020, books[0].PublishYear);
+        Assert.Equal("123", books[0].Isbn);
+        Assert.Equal("https://covers.openlibrary.org/b/id/42-M.jpg", books[0].CoverUrl);
+        Assert.Equal(new[] { "Fantasy", "Fiction" }, books[0].Subjects, StringComparer.Ordinal);
+        Assert.Empty(books[1].Subjects);
     }
 
     [Fact]
@@ -71,7 +70,7 @@ public class OpenLibraryLookupServiceTests
         BookLookupResult result = await service.LookupAsync("Test");
         var books = result.Books.ToList();
 
-        books.Select(b => b.Title).Should().Equal("Most Relevant", "Newer But Less Relevant");
+        Assert.Equal(new[] { "Most Relevant", "Newer But Less Relevant" }, books.Select(b => b.Title), StringComparer.Ordinal);
     }
 
     [Fact]
@@ -87,7 +86,7 @@ public class OpenLibraryLookupServiceTests
         var service = new OpenLibraryLookupService(httpClient, NullLogger<OpenLibraryLookupService>.Instance);
 
         BookLookupResult result = await service.LookupAsync("Test");
-        result.Books.ToList().Should().BeEmpty();
+        Assert.Empty(result.Books.ToList());
     }
 
     [Fact]
@@ -100,6 +99,6 @@ public class OpenLibraryLookupServiceTests
         var service = new OpenLibraryLookupService(httpClient, NullLogger<OpenLibraryLookupService>.Instance);
 
         BookLookupResult result = await service.LookupAsync(string.Empty);
-        result.Books.ToList().Should().BeEmpty();
+        Assert.Empty(result.Books.ToList());
     }
 }

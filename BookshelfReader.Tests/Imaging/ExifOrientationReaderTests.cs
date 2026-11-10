@@ -1,5 +1,4 @@
 using BookshelfReader.Infrastructure.Imaging;
-using FluentAssertions;
 using Xunit;
 
 namespace BookshelfReader.Tests.Imaging;
@@ -19,7 +18,7 @@ public class ExifOrientationReaderTests
     {
         byte[] jpegBytes = JpegTestImages.WithExifOrientation(JpegTestImages.CreatePlainJpeg(8, 8), orientation);
 
-        ExifOrientationReader.ReadOrientation(jpegBytes).Should().Be(orientation);
+        Assert.Equal(orientation, ExifOrientationReader.ReadOrientation(jpegBytes));
     }
 
     [Fact]
@@ -27,7 +26,7 @@ public class ExifOrientationReaderTests
     {
         byte[] jpegBytes = JpegTestImages.CreatePlainJpeg(8, 8);
 
-        ExifOrientationReader.ReadOrientation(jpegBytes).Should().Be(1);
+        Assert.Equal(1, ExifOrientationReader.ReadOrientation(jpegBytes));
     }
 
     [Fact]
@@ -35,7 +34,7 @@ public class ExifOrientationReaderTests
     {
         byte[] data = { 0x00, 0x01, 0x02, 0x03, 0x04 };
 
-        ExifOrientationReader.ReadOrientation(data).Should().Be(1);
+        Assert.Equal(1, ExifOrientationReader.ReadOrientation(data));
     }
 
     [Fact]
@@ -43,7 +42,7 @@ public class ExifOrientationReaderTests
     {
         byte[] data = { 0xFF, 0xD8 };
 
-        ExifOrientationReader.ReadOrientation(data).Should().Be(1);
+        Assert.Equal(1, ExifOrientationReader.ReadOrientation(data));
     }
 
     [Fact]
@@ -51,6 +50,6 @@ public class ExifOrientationReaderTests
     {
         byte[] jpegBytes = JpegTestImages.WithExifOrientation(JpegTestImages.CreatePlainJpeg(8, 8), orientation: 9);
 
-        ExifOrientationReader.ReadOrientation(jpegBytes).Should().Be(1);
+        Assert.Equal(1, ExifOrientationReader.ReadOrientation(jpegBytes));
     }
 }

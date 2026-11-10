@@ -1,5 +1,4 @@
 using BookshelfReader.Api.Validation;
-using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Xunit;
@@ -19,10 +18,10 @@ public class ImageUploadRequestHandlerTests
 
         UploadProcessingResult result = await handler.PrepareAsync(new DefaultHttpContext().Request, CancellationToken.None);
 
-        result.IsSuccess.Should().BeFalse();
-        result.Problem.Should().NotBeNull();
-        stream.Disposed.Should().BeTrue();
-        validator.SignatureChecked.Should().BeFalse();
+        Assert.False(result.IsSuccess);
+        Assert.NotNull(result.Problem);
+        Assert.True(stream.Disposed);
+        Assert.False(validator.SignatureChecked);
     }
 
     [Fact]
@@ -33,8 +32,8 @@ public class ImageUploadRequestHandlerTests
 
         Func<Task> action = () => handler.PrepareAsync(new DefaultHttpContext().Request, CancellationToken.None);
 
-        await action.Should().ThrowAsync<OperationCanceledException>();
-        stream.Disposed.Should().BeTrue();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(action);
+        Assert.True(stream.Disposed);
     }
 
     private sealed class TrackingStream(byte[] bytes, bool seekable) : MemoryStream(bytes)

@@ -3,7 +3,6 @@ using System.Net.Http.Headers;
 using BookshelfReader.Api.Extensions;
 using BookshelfReader.Core.Abstractions;
 using BookshelfReader.Core.Models;
-using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -39,7 +38,7 @@ public class ApiSecurityRegressionTests
         using HttpContent content = unknownLength ? new UnknownLengthContent(multipart) : multipart;
         using HttpResponseMessage response = await client.PostAsync(ParsePath, content, app.Lifetime.ApplicationStopping);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
@@ -53,7 +52,7 @@ public class ApiSecurityRegressionTests
 
         using HttpResponseMessage response = await client.PostAsync(ParsePath, multipart, app.Lifetime.ApplicationStopping);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
@@ -66,10 +65,10 @@ public class ApiSecurityRegressionTests
 
         using HttpResponseMessage response = await client.PostAsync(ParsePath, multipart, app.Lifetime.ApplicationStopping);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadGateway);
-        response.Content.Headers.ContentType!.MediaType.Should().Be("application/problem+json");
-        (await response.Content.ReadAsStringAsync(app.Lifetime.ApplicationStopping)).Should().NotContain("upstream-secret");
-        response.Headers.GetValues("Cache-Control").Should().Contain("no-store");
+        Assert.Equal(HttpStatusCode.BadGateway, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType!.MediaType);
+        Assert.DoesNotContain("upstream-secret", await response.Content.ReadAsStringAsync(app.Lifetime.ApplicationStopping), StringComparison.Ordinal);
+        Assert.Contains("no-store", response.Headers.GetValues("Cache-Control"), StringComparer.Ordinal);
     }
 
     [Fact]
@@ -80,9 +79,9 @@ public class ApiSecurityRegressionTests
 
         using HttpResponseMessage response = await client.PostAsync(ParsePath, new ByteArrayContent(Array.Empty<byte>()), app.Lifetime.ApplicationStopping);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-        response.Headers.GetValues("Cache-Control").Should().Contain("no-store");
-        response.Headers.GetValues("X-Content-Type-Options").Should().Contain("nosniff");
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Contains("no-store", response.Headers.GetValues("Cache-Control"), StringComparer.Ordinal);
+        Assert.Contains("nosniff", response.Headers.GetValues("X-Content-Type-Options"), StringComparer.Ordinal);
     }
 
     private static async Task<WebApplication> CreateAppAsync(bool providerFails = false, bool requireApiKey = false)

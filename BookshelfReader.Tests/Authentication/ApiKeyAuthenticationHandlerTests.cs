@@ -1,6 +1,5 @@
 using System.Text.Encodings.Web;
 using BookshelfReader.Extensions.Authentication;
-using FluentAssertions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -20,8 +19,8 @@ public class ApiKeyAuthenticationHandlerTests
 
         AuthenticateResult result = await handler.AuthenticateAsync();
 
-        result.Succeeded.Should().BeFalse();
-        result.Failure.Should().NotBeNull();
+        Assert.False(result.Succeeded);
+        Assert.NotNull(result.Failure);
     }
 
     [Fact]
@@ -34,8 +33,8 @@ public class ApiKeyAuthenticationHandlerTests
 
         AuthenticateResult result = await handler.AuthenticateAsync();
 
-        result.Succeeded.Should().BeFalse();
-        result.Failure.Should().NotBeNull();
+        Assert.False(result.Succeeded);
+        Assert.NotNull(result.Failure);
     }
 
     [Fact]
@@ -49,10 +48,10 @@ public class ApiKeyAuthenticationHandlerTests
 
         AuthenticateResult result = await handler.AuthenticateAsync();
 
-        result.Succeeded.Should().BeTrue();
-        result.Principal.Should().NotBeNull();
-        result.Principal!.FindFirst(ApiKeyAuthenticationDefaults.ApiKeyClaimType)!.Value
-            .Should().Be(ApiKeyValidator.CreateKeyIdentifier(expectedKey));
+        Assert.True(result.Succeeded);
+        Assert.NotNull(result.Principal);
+        Assert.Equal(ApiKeyValidator.CreateKeyIdentifier(expectedKey),
+            result.Principal.FindFirst(ApiKeyAuthenticationDefaults.ApiKeyClaimType)!.Value);
     }
 
     private static ApiKeyAuthenticationHandler CreateHandler(ApiKeyAuthenticationOptions options, HttpContext context)

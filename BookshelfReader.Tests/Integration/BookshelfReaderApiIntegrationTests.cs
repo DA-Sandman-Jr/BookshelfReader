@@ -9,7 +9,6 @@ using BookshelfReader.Core.Abstractions;
 using BookshelfReader.Core.Models;
 using BookshelfReader.Extensions;
 using BookshelfReader.Extensions.Authentication;
-using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
@@ -36,10 +35,10 @@ public class BookshelfReaderApiIntegrationTests
         {
             using HttpResponseMessage response = await SendParseAsync(client, ApiKey);
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             ParseResult? result = await response.Content.ReadFromJsonAsync<ParseResult>();
-            result.Should().NotBeNull();
-            result!.Books.Should().BeEmpty();
+            Assert.NotNull(result);
+            Assert.Empty(result.Books);
         });
     }
 
@@ -52,7 +51,7 @@ public class BookshelfReaderApiIntegrationTests
         {
             using HttpResponseMessage response = await SendParseAsync(client);
 
-            response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         });
     }
 
@@ -65,7 +64,7 @@ public class BookshelfReaderApiIntegrationTests
         {
             using HttpResponseMessage response = await SendParseAsync(client, "wrong-key");
 
-            response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         });
     }
 
@@ -78,7 +77,7 @@ public class BookshelfReaderApiIntegrationTests
         {
             using HttpResponseMessage response = await SendParseAsync(client);
 
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         });
     }
 
@@ -96,10 +95,10 @@ public class BookshelfReaderApiIntegrationTests
             using HttpResponseMessage secondResponse = await SendParseAsync(client);
             using HttpResponseMessage thirdResponse = await SendParseAsync(client);
 
-            firstResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-            secondResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-            thirdResponse.StatusCode.Should().Be(HttpStatusCode.TooManyRequests);
-            thirdResponse.Headers.RetryAfter.Should().NotBeNull();
+            Assert.Equal(HttpStatusCode.OK, firstResponse.StatusCode);
+            Assert.Equal(HttpStatusCode.OK, secondResponse.StatusCode);
+            Assert.Equal(HttpStatusCode.TooManyRequests, thirdResponse.StatusCode);
+            Assert.NotNull(thirdResponse.Headers.RetryAfter);
         });
     }
 
@@ -117,9 +116,9 @@ public class BookshelfReaderApiIntegrationTests
             using HttpResponseMessage secondResponse = await SendParseAsync(client);
             using HttpResponseMessage thirdResponse = await SendParseAsync(client);
 
-            firstResponse.StatusCode.Should().NotBe(HttpStatusCode.TooManyRequests);
-            secondResponse.StatusCode.Should().NotBe(HttpStatusCode.TooManyRequests);
-            thirdResponse.StatusCode.Should().NotBe(HttpStatusCode.TooManyRequests);
+            Assert.NotEqual(HttpStatusCode.TooManyRequests, firstResponse.StatusCode);
+            Assert.NotEqual(HttpStatusCode.TooManyRequests, secondResponse.StatusCode);
+            Assert.NotEqual(HttpStatusCode.TooManyRequests, thirdResponse.StatusCode);
         });
     }
 

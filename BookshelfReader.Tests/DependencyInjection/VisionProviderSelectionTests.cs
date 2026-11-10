@@ -2,7 +2,6 @@ using BookshelfReader.Core.Abstractions;
 using BookshelfReader.Core.Options;
 using BookshelfReader.Extensions;
 using BookshelfReader.Infrastructure.VisionLlm;
-using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -31,7 +30,7 @@ public class VisionProviderSelectionTests
             handler = delegatingHandler.InnerHandler!;
         }
 
-        handler.Should().BeOfType<HttpClientHandler>().Which.AllowAutoRedirect.Should().BeFalse();
+        Assert.False(Assert.IsType<HttpClientHandler>(handler).AllowAutoRedirect);
     }
 
     [Fact]
@@ -44,7 +43,7 @@ public class VisionProviderSelectionTests
 
         IVisionBookReader reader = provider.GetRequiredService<IVisionBookReader>();
 
-        reader.Should().BeOfType<ClaudeVisionBookReader>();
+        Assert.IsType<ClaudeVisionBookReader>(reader);
     }
 
     [Theory]
@@ -61,7 +60,7 @@ public class VisionProviderSelectionTests
 
         IVisionBookReader reader = provider.GetRequiredService<IVisionBookReader>();
 
-        reader.Should().BeOfType<OpenAIVisionBookReader>();
+        Assert.IsType<OpenAIVisionBookReader>(reader);
     }
 
     [Theory]
@@ -77,7 +76,7 @@ public class VisionProviderSelectionTests
 
         IVisionBookReader reader = provider.GetRequiredService<IVisionBookReader>();
 
-        reader.Should().BeOfType<GeminiVisionBookReader>();
+        Assert.IsType<GeminiVisionBookReader>(reader);
     }
 
     [Fact]
@@ -93,9 +92,7 @@ public class VisionProviderSelectionTests
                 ["OpenAIVision:ApiKey"] = "openai-key"
             });
 
-            Action act = () => provider.GetRequiredService<IVisionBookReader>();
-
-            act.Should().NotThrow();
+            provider.GetRequiredService<IVisionBookReader>();
         }
         finally
         {
@@ -117,8 +114,8 @@ public class VisionProviderSelectionTests
 
             Action act = () => provider.GetRequiredService<IOptions<OpenAIVisionOptions>>().Value.ToString();
 
-            act.Should().Throw<OptionsValidationException>()
-                .WithMessage("*OpenAIVision:ApiKey must be configured, or set the OPENAI_API_KEY environment variable.*");
+            OptionsValidationException exception = Assert.ThrowsAny<OptionsValidationException>(act);
+            Assert.Contains("OpenAIVision:ApiKey must be configured, or set the OPENAI_API_KEY environment variable.", exception.Message, StringComparison.OrdinalIgnoreCase);
         }
         finally
         {
@@ -140,7 +137,7 @@ public class VisionProviderSelectionTests
 
             OpenAIVisionOptions options = provider.GetRequiredService<IOptions<OpenAIVisionOptions>>().Value;
 
-            options.ApiKey.Should().Be("env-openai-key");
+            Assert.Equal("env-openai-key", options.ApiKey);
         }
         finally
         {
@@ -162,8 +159,8 @@ public class VisionProviderSelectionTests
 
             Action act = () => provider.GetRequiredService<IOptions<GeminiVisionOptions>>().Value.ToString();
 
-            act.Should().Throw<OptionsValidationException>()
-                .WithMessage("*GeminiVision:ApiKey must be configured, or set the GEMINI_API_KEY environment variable.*");
+            OptionsValidationException exception = Assert.ThrowsAny<OptionsValidationException>(act);
+            Assert.Contains("GeminiVision:ApiKey must be configured, or set the GEMINI_API_KEY environment variable.", exception.Message, StringComparison.OrdinalIgnoreCase);
         }
         finally
         {
@@ -185,7 +182,7 @@ public class VisionProviderSelectionTests
 
             GeminiVisionOptions options = provider.GetRequiredService<IOptions<GeminiVisionOptions>>().Value;
 
-            options.ApiKey.Should().Be("env-gemini-key");
+            Assert.Equal("env-gemini-key", options.ApiKey);
         }
         finally
         {
@@ -203,8 +200,8 @@ public class VisionProviderSelectionTests
 
         Action act = () => provider.GetRequiredService<IOptions<VisionOptions>>().Value.ToString();
 
-        act.Should().Throw<OptionsValidationException>()
-            .WithMessage("*Vision:Provider must be one of*");
+        OptionsValidationException exception = Assert.ThrowsAny<OptionsValidationException>(act);
+        Assert.Contains("Vision:Provider must be one of", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -219,8 +216,8 @@ public class VisionProviderSelectionTests
 
         Action act = () => provider.GetRequiredService<IOptions<OpenAIVisionOptions>>().Value.ToString();
 
-        act.Should().Throw<OptionsValidationException>()
-            .WithMessage("*OpenAIVision:BaseUrl must be an absolute https URL.*");
+        OptionsValidationException exception = Assert.ThrowsAny<OptionsValidationException>(act);
+        Assert.Contains("OpenAIVision:BaseUrl must be an absolute https URL.", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     private static ServiceProvider BuildProvider(Dictionary<string, string?> settings)
