@@ -53,6 +53,6 @@
 
   <!-- Studio-wide code-quality analyzer rollout. -->
   <ItemGroup>
-    <PackageReference Include="B44.Standards" Version="0.15.*" PrivateAssets="all" />
+    <PackageReference Include="B44.Standards" Version="0.17.*" PrivateAssets="all" />
   </ItemGroup>
 </Project>
